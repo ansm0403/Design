@@ -1,2 +1,2 @@
-export * as light from './light.ts';
-export * as dark from './dark.ts';
+export * as light from './light';
+export * as dark from './dark';

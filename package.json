@@ -1,26 +1,28 @@
 {
   "name": "@sangmoon/themes",
   "version": "0.0.1",
-  "type" : "module",
+  "type": "module",
   "description": "",
-  "main": "index.js",
-  "exports" : {
-    "." : {
-      "types" : "./dist/index.d.ts",
-      "import" : "./dist/index.js",
-      "require" : "./dist/index.cjs" 
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm run clean && npm run build.js && npm run build.ts",
-    "build.js" : "node build.js",
-    "build.ts" : "tsc --emitDeclarationOnly",
-    "clean" : "rmdir /s /q dist"
+    "build": "npm run clean && npm run build:js && npm run build:ts",
+    "build:css" : "node ./script/build-css-module.js",
+    "build:js": "node build.js",
+    "build:ts": "tsc --emitDeclarationOnly",
+    "clean": "rmdir /s /q dist"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "esbuild": "^0.21.5"
+    "esbuild": "^0.21.5",
+    "typescript": "^5.8.3"
   }
 }
