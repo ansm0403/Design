@@ -2,7 +2,7 @@
 
 > 작업할 때마다 완료된 항목을 체크한다.
 > MVP 목표 = Phase 0~4 (1·2순위 컴포넌트) + Phase 5의 CI까지.
-> 최종 갱신: 2026-05-22 — Phase 2 STEP 2-4 완료 (Storybook 10 세팅 + Box/Flex/Stack 스토리).
+> 최종 갱신: 2026-05-22 — Phase 3 STEP 3-1 완료 (Button — variant/color/size, cva).
 
 ---
 
@@ -44,8 +44,8 @@
 - [x] 검증: Storybook에서 토큰 색 렌더 + 다크모드 토글 동작 *(사용자 시각 확인 완료)*
 
 ## Phase 3 — 핵심 컴포넌트
-- [ ] cva(class-variance-authority) 설치
-- [ ] Button (1) — variant/color/size (cva 활용)
+- [x] cva(class-variance-authority) 설치
+- [x] Button (1) — variant/color/size (cva 활용)
 - [ ] Button (2) — loading/disabled/a11y (aria-busy, focus-visible)
 - [ ] Button — headless(useButton) 분리 + ToggleButton *(선택, 시간 되면)*
 - [ ] TextInput (1) — Controlled, label/error/helper, 접근성
@@ -108,3 +108,6 @@
 - 2026-05-22 | Phase 2 STEP 2-4 완료 (Storybook 10.4 수동 세팅 + main.ts/preview.tsx + Box/Flex/Stack 스토리, library build·storybook build 검증) | storybook init 비대화형 실패(빌더 자동감지) → 수동 설치 / pnpm 빌드스크립트 차단 → onlyBuiltDependencies 설정 | 토큰색·다크모드 시각 확인은 사용자 대기 → Phase 3 예정
 - 2026-05-22 | STEP 2-4 edgecase-review 수행 (FAIL 0, WARN 1) | 스토리 클래스가 라이브러리 dist/styles.css 로 누출 → src/library.css 분리(@source not)로 수정, docs/edgecase/phase-2.md 기록 | Phase 3 (핵심 컴포넌트) 예정
 - 2026-05-22 | STEP 2-4 edgecase-review 재실행 (사용자 요청, FAIL 0, 신규 WARN 0) | CSS 누출 수정 검증 — dist/styles.css 스토리 클래스 0 재확인 / Storybook 동작 사용자 시각 확인 완료 → Phase 2 종료 | Phase 3 시작 예정
+- 2026-05-22 | Phase 3 STEP 3-1 완료 (Button — variant/color/size, cva 설치·compoundVariants 9조합, 순수 button+forwardRef, Playground/AllCombinations 스토리, tsc·build·styles.css 검증) | solid 글자색을 문서 예시 text-white 대신 text-background 로 — 규칙3 위반·다크 대비 회피 (docs/edgecase/phase-3.md) | STEP 3-2 (loading/접근성) 예정
+- 2026-05-22 | STEP 3-1 edgecase-review 수행 (FAIL 0, WARN 1) | text-white→text-background 결정 근거 docs/edgecase/phase-3.md 기록, architecture.md §6 예시 스니펫 정정은 사용자 판단 위임 | STEP 3-2 예정
+- 2026-05-22 | STEP 3-1 edgecase-review 재실행 (사용자 요청, FAIL 0, WARN +1) | dist/styles.css 전수 검사 — cva `"outline"` 식별자가 Tailwind 스캐너에 잡혀 dead `.outline` 누출(수용) / 선재 누출 발견: cn.ts 주석의 따옴표 예시 → `.bg-blue-500`·`.bg-red-500` 배포 CSS 누출(Phase 2 파일, 후속 수정 권장). docs/edgecase/phase-3.md 갱신 | STEP 3-2 예정

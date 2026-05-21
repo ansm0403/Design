@@ -664,6 +664,37 @@ cva 사용법을 주석으로 간단히 설명해줘.
 - **cva**: `cva("base-class", { variants: { variant: { solid: "...", outline: "..." } } })` 형태.
   variant 조합이 많아질 때 클래스 관리를 깔끔하게 해준다.
 
+**진행 기록 (2026-05-22, STEP 3-1 완료)**
+- `class-variance-authority@^0.7.1` 을 ui 의 **`dependencies`** 로 설치 — cva 는
+  런타임에 className 을 계산하므로 dependency 다(clsx/tailwind-merge 와 동일 성격).
+  tsdown 이 `dependencies` 를 자동 external 처리해 번들에 안 들어간다.
+- `Button.tsx`: **순수 `<button>` + `forwardRef`** 로 구현(Box 기반 아님). Button 은
+  polymorphic 이 아니라 항상 button 이므로 Box·Flex 의 제네릭 캐스팅(→ displayName
+  함정)이 불필요하다. `forwardRef(ButtonInner)` 결과에 `.displayName` 을 바로 지정.
+- ⚠️ **cva 구조**: `variant`(solid/outline/ghost)·`color`(primary/danger/neutral)는
+  단독으로는 시각 결과를 못 정한다(배경·테두리·글자색이 둘의 *조합*으로 결정) →
+  `variants` 에는 옵션만 빈 문자열로 선언하고, 실제 클래스는 `compoundVariants` 가
+  variant×color 9조합으로 부여한다. `size` 만 독립적이라 `variants.size` 에 단독 선언.
+- ⚠️ **베이스에 `border border-transparent`**: solid/ghost 도 1px 투명 테두리를 둬
+  outline(색 테두리)과 박스 크기를 픽셀 단위로 일치시킨다. cva 출력이
+  `border-transparent` → (outline 시) `border-primary` 순서라 `cn`/twMerge 가
+  뒤엣것을 남겨 정상 dedupe 된다.
+- ⚠️ **solid 글자색 = `text-background`** (문서 예시의 `text-white` 아님): `text-white`
+  는 불변규칙 3(색 하드코딩) 위반 + dark 테마의 옅은 primary 위에서 대비가 깨진다.
+  `text-background` 는 토큰 기반이며 light=거의 흰색/dark=거의 검정으로 자동 반전돼
+  두 테마 모두 대비 확보(`docs/edgecase/phase-3.md` 참조).
+- ⚠️ **타입은 `VariantProps<typeof buttonStyles>`** 로 cva 정의에서 자동 추출 —
+  variant 옵션 변경 시 prop 타입이 자동 추종. `ComponentPropsWithoutRef<"button">`
+  와 합쳐도 `color`/`size` 키 충돌 없음(네이티브 button 속성에 없는 이름).
+- `type` 미지정 시 `"button"` 폴백 — `<form>` 안에서 submit 으로 동작하는 함정 방지.
+- 스토리: `Playground`(Controls) + `AllCombinations`(size별 variant×color 27조합 전체).
+  Tailwind 정적 클래스 원칙은 cva 가 보장 — 조합 클래스 리터럴이 Button.tsx 안에
+  있어 스캐너가 인식한다(스토리가 variant 값을 동적으로 넘겨도 무방).
+- 검증: `tsc -p tsconfig.json` 통과 / `build` 후 `dist` 에 index.js·d.ts·styles.css,
+  d.ts 에 Button + ButtonProps(variant·color·size 리터럴 유니온) export, styles.css
+  에 토큰 유틸리티(`bg-primary`·`text-background`·`border-danger`·`hover:bg-*/90` 등)
+  전량 생성 확인. `disabled`/`focus-visible` 스타일은 STEP 3-2 범위라 제외.
+
 ---
 
 ## STEP 3-2. Button (2) — loading / 접근성
