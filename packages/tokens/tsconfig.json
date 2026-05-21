@@ -1,0 +1,13 @@
+{
+  // 루트 공통 설정(tsconfig.base.json)을 상속한다.
+  // target/strict/declaration 등 모든 패키지 공통 옵션은 거기서 한 번만 정의.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // 실제 번들/타입선언(.d.ts) 생성은 tsdown 이 담당한다.
+    // 이 tsconfig 는 에디터 자동완성·타입검사 전용이므로
+    // tsc 가 실수로 .js 파일을 내보내지 않도록 막는다.
+    "noEmit": true
+  },
+  // src(토큰 정의)와 scripts(빌드 스크립트) 모두 타입 검사 대상에 포함.
+  "include": ["src", "scripts"]
+}

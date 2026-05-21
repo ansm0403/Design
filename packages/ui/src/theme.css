@@ -1,0 +1,35 @@
+/* @import "tailwindcss" — Tailwind v4 엔진을 불러온다.
+   preflight(브라우저 기본 스타일 리셋) + 유틸리티 클래스 생성 + @theme 처리를 담당.
+   v4 는 이 한 줄이 설정의 대부분 — tailwind.config.js 가 필요 없다(CSS-first). */
+@import "tailwindcss";
+
+/* @import "@my-ds/tokens/styles.css" — 토큰 패키지가 생성한 CSS 변수를 가져온다.
+   (:root 의 라이트값, [data-theme="dark"] 의 다크값)
+   아래 @theme inline 이 var(--color-*) 로 이 변수들을 참조하므로 먼저 import 해야 한다.
+   @import 규칙은 CSS 명세상 다른 규칙보다 앞에 와야 한다. */
+@import "@my-ds/tokens/styles.css";
+
+/* @theme inline { } — Tailwind v4 의 토큰 ↔ 유틸리티 연결 지점.
+   여기 등록한 --color-* 변수마다 Tailwind 가 bg-*, text-*, border-* 유틸리티를 만든다.
+
+   `inline` 을 쓰는 이유 — 외부 CSS 변수(디자인 토큰)를 @theme 에 별칭으로 둘 때의
+   표준 관용이다. inline 이면 Tailwind 가 유틸리티에서 토큰 변수를 직접 참조한다:
+     .bg-primary { background-color: var(--color-primary) }
+   → [data-theme="dark"] 로 토큰 값만 바뀌면 유틸리티 색도 자동으로 따라간다.
+
+   토큰 변수의 실제 값은 위에서 @import 한 tokens.css(layer 없음)가 정의한다.
+   Tailwind 는 @theme 출력을 @layer theme 안에 넣는데, CSS @layer 우선순위상
+   'layer 없는' 선언이 layer 안의 선언을 이긴다 → tokens.css 의 :root /
+   [data-theme="dark"] 값이 항상 권위를 가진다. 그래서 @theme 변수명을 토큰과
+   똑같이 둬도(--color-primary ↔ --color-primary) 안전하다. */
+@theme inline {
+  --color-primary: var(--color-primary);
+  --color-danger: var(--color-danger);
+  --color-success: var(--color-success);
+  --color-neutral: var(--color-neutral);
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-foreground: var(--color-foreground);
+  --color-muted: var(--color-muted);
+  --color-border: var(--color-border);
+}

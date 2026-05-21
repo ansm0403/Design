@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    // 출력 타겟: 대부분의 모던 브라우저·Node 20+에서 동작
+    "target": "ES2020",
+
+    // 번들러(tsdown/Rolldown)가 import 구문을 처리하므로 ESNext 유지
+    "module": "ESNext",
+
+    // "Bundler" 모드: 번들러가 모듈 해석을 담당 — tsdown 사용 환경의 표준
+    // "Node16"/"NodeNext"는 .js 확장자 강제 요구 → 라이브러리 개발에 불편
+    "moduleResolution": "Bundler",
+
+    // React 17+ 자동 JSX 변환: import React from 'react' 없이도 JSX 사용 가능
+    "jsx": "react-jsx",
+
+    // 엄격 모드: null 체크, 타입 안전성 최대치
+    "strict": true,
+
+    // .d.ts 타입 정의 파일 생성 → 라이브러리 사용처에서 자동완성·타입 체크 동작
+    "declaration": true,
+
+    // .d.ts.map 생성: "정의로 이동"(Go to Definition) 시 원본 .ts 소스로 이동
+    "declarationMap": true,
+
+    // tsdown 같은 단일 파일 트랜스파일러와의 호환 보장
+    // 각 파일을 독립적으로 컴파일 가능해야 함 (const enum 등 금지)
+    "isolatedModules": true,
+
+    // CommonJS 모듈을 ESM처럼 import 가능하게 (라이브러리 호환성)
+    "esModuleInterop": true,
+
+    // 외부 라이브러리 타입 오류 무시 (불필요한 노이즈 제거)
+    "skipLibCheck": true
+  }
+  // include/exclude 는 각 패키지의 tsconfig.json 에서 지정
+}

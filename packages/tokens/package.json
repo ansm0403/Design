@@ -1,0 +1,22 @@
+{
+  "name": "@my-ds/tokens",
+  "version": "0.0.0",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/tokens.css"
+  },
+  "scripts": {
+    "build": "tsdown && tsx scripts/build-css.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.41",
+    "tsx": "^4.22.3"
+  }
+}
