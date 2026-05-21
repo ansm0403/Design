@@ -564,6 +564,38 @@ Storybook 10 기준 설치 명령·설정을 확인해서 진행해줘.
 - 글로벌 데코레이터: Storybook의 모든 스토리에 공통 래퍼를 씌우는 방법.
   `data-theme` 값을 데코레이터가 제어하면 모든 컴포넌트의 다크모드를 즉시 확인 가능.
 
+**진행 기록 (2026-05-22, STEP 2-4 완료)**
+- Storybook **10.4.0** + `@storybook/react-vite` + `@storybook/addon-docs`(전부 10.4.0)
+  설치. Node 요구사항은 20.16+ — 현 20.19.0 통과. SB10 은 ESM-only.
+- ⚠️ **`storybook init` 비대화형 실패**: `CI=true ... init` 으로 실행했으나
+  `packages/ui` 에 Vite/Webpack 이 없어 빌더 자동감지에 실패 → 대화형 select 프롬프트
+  에서 멈춤(비-TTY 라 응답 불가). init 은 흔적을 남기지 않았다(클린). → **수동 설치**
+  로 전환: 패키지 직접 설치 + `.storybook/main.ts`·`preview.tsx` 직접 작성.
+- ⚠️ **pnpm 빌드 스크립트 차단**: pnpm 10 은 의존성의 install/postinstall 을 기본
+  차단한다. Vite 가 쓰는 `esbuild`, Storybook 의 `@parcel/watcher` 가 막혀
+  → 루트 `package.json` 에 `"pnpm": { "onlyBuiltDependencies": ["esbuild",
+  "@parcel/watcher"] }` 추가 후 `pnpm install` 재실행해 네이티브 빌드 수행.
+- Tailwind 처리: A안 채택 — `.storybook/main.ts` 의 `viteFinal` 에 `@tailwindcss/vite`
+  플러그인을 끼워 `theme.css` 를 Storybook(Vite) 에서 라이브 처리. STEP 2-2 에서
+  tsdown 비호환으로 버린 그 플러그인을, 진짜 Vite 인 Storybook 에서 정상 사용.
+  버전: `vite@8`·`@storybook/react-vite@10.4`·`@tailwindcss/vite@4.3` peer 호환 확인.
+- `.storybook/preview.tsx`(`.tsx` — 데코레이터가 JSX 반환): `theme.css` import +
+  `globalTypes.theme` 툴바 선택기 + `data-theme` 래퍼 데코레이터(배경·글자색은
+  토큰 CSS 변수 `var(--color-*)` 직접 참조 → 테마 전환이 한눈에 보임).
+- 스토리: `Box`(Primary/AsParagraph — AsParagraph 는 `as="p"` 타입 충돌 회피로
+  `render` 사용), `Flex`(Playground/Column/SpaceBetween + argTypes 컨트롤),
+  `Stack`(Default/LargeGap). CSF3 형식, `tags:["autodocs"]`.
+- ⚠️ **CSS 누출 엣지케이스**(edgecase-review WARN, `docs/edgecase/phase-2.md`):
+  `src/` 에 들어온 `*.stories.tsx` 가 라이브러리 빌드 Tailwind 스캔에 잡혀 스토리
+  전용 클래스가 `dist/styles.css` 로 새어 나갔다. → `src/library.css`(= `theme.css`
+  `@import` + `@source not "**/*.stories.tsx"`)를 라이브러리 빌드 진입 CSS 로 분리,
+  build 스크립트를 `-i src/library.css` 로 변경. `theme.css` 는 `@source not` 없는
+  공유 base 로 유지(Storybook 은 이걸 직접 import 해 스토리 클래스 정상 생성).
+- 검증: `tsc` 통과 / 라이브러리 빌드 — `dist/styles.css` 에 스토리 클래스 0,
+  레이아웃 클래스 정상 / `storybook build` 성공 — `storybook-static` CSS 에 스토리
+  클래스 포함 / `storybook dev` 정상 기동(localhost:6006). ⚠️ 토큰 색 렌더·다크모드
+  토글의 **시각 확인은 사용자 몫**(에이전트가 브라우저를 볼 수 없음).
+
 ---
 
 ## STEP 2-5. Flex / Stack 컴포넌트

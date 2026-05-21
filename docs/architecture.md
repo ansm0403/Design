@@ -2,7 +2,9 @@
 
 > 이 문서는 프로젝트의 **헌법**이다. 무엇을, 왜, 어떤 구조로 만드는지의 기준.
 > 구현 중 판단이 흔들릴 때 이 문서로 돌아온다.
-> 최종 갱신: 2026-05-22 — STEP 2-2: CSS 빌드를 @tailwindcss/cli 별도 단계로 전환
+> 최종 갱신: 2026-05-22 — STEP 2-4: Storybook 은 Vite 기반이라 Tailwind 처리를
+>   @tailwindcss/vite(viteFinal)로 한다. §6 에 Storybook 처리 경로 추가.
+> 2026-05-22 — STEP 2-2: CSS 빌드를 @tailwindcss/cli 별도 단계로 전환
 >   (@tailwindcss/vite 플러그인이 tsdown/Rolldown 과 비호환). @theme → @theme inline.
 > 2026-05-22 — tsdown 0.21.x 로 고정 (Node 20.19.0 호환 상한).
 > 2026-05-21 — Tailwind v4 CSS-first, Storybook 10, vitest-axe 반영.
@@ -86,14 +88,16 @@ my-design-system/
    │  └─ package.json
    └─ ui/                    # Phase 2~4: UI 컴포넌트
       ├─ src/
-      │  ├─ theme.css         # @import tailwindcss + @theme { CSS변수 → Tailwind 유틸리티 매핑 }
+      │  ├─ theme.css         # 공유 테마: @import tailwindcss + 토큰 + @theme inline (Storybook 입력)
+      │  ├─ library.css       # 라이브러리 빌드 입력: theme.css + @source not(스토리 제외)
+      │  ├─ utils/            # cn() 등 내부 유틸리티
       │  ├─ Box/
       │  ├─ Flex/
       │  ├─ Button/
       │  ├─ TextInput/
       │  ├─ Toast/
       │  └─ index.ts
-      ├─ .storybook/          # Storybook 설정
+      ├─ .storybook/          # Storybook 설정 (main.ts, preview.tsx)
       ├─ tsdown.config.ts
       ├─ tsconfig.json
       └─ package.json
@@ -178,9 +182,10 @@ Tailwind 클래스는 그대로인데 색만 바뀐다. 컴포넌트 코드 수�
 - tsdown은 기본적으로 CSS import를 JS에 자동 주입하지 않으므로 **명시적 CSS export** 사용.
 
 **CSS 빌드 방식 결정 (STEP 2-2, 2026-05-22)**:
-- `theme.css` → `dist/styles.css` 컴파일은 **`@tailwindcss/cli` 별도 빌드 단계**로 한다.
-  ui 의 build 스크립트는 `tsdown && tailwindcss -i src/theme.css -o dist/styles.css`
+- `dist/styles.css` 컴파일은 **`@tailwindcss/cli` 별도 빌드 단계**로 한다.
+  ui 의 build 스크립트는 `tsdown && tailwindcss -i src/library.css -o dist/styles.css`
   (tokens 의 `tsdown && tsx scripts/build-css.ts` 와 같은 2단계 패턴).
+  입력이 `theme.css` 가 아닌 `library.css` 인 이유는 아래 Storybook 처리 항목 참조.
 - 처음 계획한 `@tailwindcss/vite` 플러그인을 tsdown 에 끼우는 방식은 폐기 — tsdown
   (Rolldown)은 Vite 가 아니라, 플러그인이 Vite 전용 컨텍스트를 찾다 crash 한다
   (`TypeError: Cannot read properties of null (reading 'createResolver')`).
@@ -188,6 +193,22 @@ Tailwind 클래스는 그대로인데 색만 바뀐다. 컴포넌트 코드 수�
 - Tailwind v4 유틸리티는 **사용처 스캔 기반(on-demand)** 이다. 컴포넌트가 실제로
   `bg-primary` 를 써야 그 클래스가 `dist/styles.css` 에 생성된다. 컴포넌트가 없는
   STEP 2-2 시점의 `styles.css` 는 preflight + 토큰 변수까지만 — 정상이다.
+
+**Storybook 의 Tailwind 처리 (STEP 2-4, 2026-05-22)**:
+- Storybook 은 **Vite 기반**이라, Storybook 안에서는 `theme.css` 를
+  `@tailwindcss/vite` 플러그인으로 처리한다 (`.storybook/main.ts` 의 `viteFinal` 훅).
+- 이는 위 "CSS 빌드 방식 결정" 과 모순되지 않는다 — 거기서 `@tailwindcss/vite` 를
+  버린 건 **tsdown**(Rolldown, Vite 아님)과 비호환이라서다. Storybook 의 빌더는
+  진짜 Vite 라 이 플러그인의 정상 사용처다.
+- 정리하면 Tailwind 처리 경로가 둘로 갈리고, **입력 CSS 도 갈라진다**:
+  · 라이브러리 배포용 → `@tailwindcss/cli`, 입력 `src/library.css` → `dist/styles.css`
+  · Storybook 개발용  → `@tailwindcss/vite`(`viteFinal`), 입력 `src/theme.css`(HMR)
+- `theme.css` 는 공유 base 다 — `@import "tailwindcss"` + 토큰 + `@theme inline`.
+  `library.css` 는 `theme.css` 를 `@import` 한 뒤 `@source not "**/*.stories.tsx"` 로
+  스토리 파일을 Tailwind 스캔에서 제외한다 → 스토리 전용 클래스가 배포 CSS 로
+  새지 않게 한다(`@theme` 정의는 `theme.css` 한 곳 — single source of truth 유지).
+  `@source not` 을 공유 `theme.css` 에 두면 Storybook 까지 스토리 클래스를 잃으므로
+  반드시 라이브러리 진입 파일에만 둔다 (`docs/edgecase/phase-2.md` STEP 2-4 참조).
 
 > ⚠️ **Tailwind v4 라이브러리 prefix 한계**: v4의 prefix 옵션은 있으나
 > 라이브러리 빌드 시 tree-shaking이 불완전 (사용 여부와 무관하게 모든 prefix 유틸리티가 번들에 포함됨).

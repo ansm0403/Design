@@ -161,3 +161,51 @@ export const Box = BoxImpl as <T extends ElementType = "div">(
 
 **해결 (2026-05-22)**: Box·Flex·Stack 모두 `XxxImpl` 중간 변수 + 캐스팅 전
 `displayName` 설정으로 수정. 재빌드·`tsc` 통과 확인.
+
+---
+
+#### STEP 2-4 — Storybook 세팅 + 스토리
+
+##### ⚠️ 스토리 전용 Tailwind 클래스가 라이브러리 배포 CSS 로 누출
+
+**Problem**: STEP 2-4 가 `src/` 안에 `*.stories.tsx` 를 추가했다. 라이브러리
+배포 CSS 빌드(`@tailwindcss/cli -i src/theme.css -o dist/styles.css`)는 Tailwind
+v4 의 자동 콘텐츠 감지로 `packages/ui` 전체를 스캔한다 → **스토리 파일까지
+스캔**해, 스토리 데모에서만 쓰는 클래스(`text-white`·`px-4`·`bg-primary` 등)가
+배포 CSS `dist/styles.css` 로 새어 들어간다. 배포 CSS 는 라이브러리 *컴포넌트*가
+쓰는 유틸리티만 담아야 하는데, *미리보기 dev 산출물*인 스토리가 출력물을 오염시킨다
+(소비자에게 불필요한 클래스 전달 — single source of truth 위반).
+
+검증: `pnpm --filter @my-ds/ui build` 후 `dist/styles.css` 에 `.text-white`·
+`.px-4`·`.bg-primary`(전부 스토리에서만 사용) 가 존재함을 확인.
+
+**Before** (공유 `theme.css` 가 라이브러리·Storybook 양쪽의 입력):
+```text
+src/theme.css ──┬─→ @tailwindcss/cli  → dist/styles.css   (스토리 클래스 누출 ❌)
+                └─→ Storybook(@tailwindcss/vite)
+```
+1차 시도 — `theme.css` 에 `@source not "**/*.stories.tsx"` 추가 → 라이브러리
+CSS 는 깨끗해졌으나 **Storybook 도 스토리 클래스를 잃었다**(`@source not` 은
+Vite 플러그인 경로에도 적용됨). 공유 파일에 두면 안 됨이 확인됨.
+
+**After** (라이브러리 빌드 전용 진입 CSS 를 분리):
+```text
+src/theme.css   ───────────────────→ Storybook(@tailwindcss/vite)  (스토리 포함 ✅)
+src/library.css ─→ @tailwindcss/cli → dist/styles.css              (스토리 제외 ✅)
+  └ @import "./theme.css"; @source not "**/*.stories.tsx";
+```
+- `src/library.css` 신규: `theme.css` 를 `@import` 한 뒤 `@source not` 으로
+  스토리만 제외. build 스크립트를 `-i src/theme.css` → `-i src/library.css` 로 변경.
+- `theme.css` 는 `@source not` 없는 순수 공유 테마로 유지 → Storybook 이 직접
+  `@import` 해 스토리 클래스를 정상 생성.
+
+**Why**: `@source not` 은 한번 처리 CSS 에 들어가면 그 빌드 전체(CLI·Vite 공통)에
+적용된다. 따라서 "라이브러리 빌드만 스토리 제외" 를 하려면 입력 CSS 자체를 갈라야
+한다 — 공유 base(`theme.css`)는 `not` 없이 두고, 라이브러리 전용 진입 파일
+(`library.css`)에만 `not` 을 둔다. `@theme` 정의는 `theme.css` 한 곳에만 있어
+single source of truth 유지(`library.css` 는 import + 1줄 제외만).
+
+**해결 (2026-05-22)**: `src/library.css` 분리 + build 스크립트 입력 변경.
+검증 — 라이브러리 빌드: `dist/styles.css` 에 스토리 클래스 0, 레이아웃 클래스
+(`flex`·`gap-4` 등) 정상. Storybook 빌드: `storybook-static` CSS 에 스토리 클래스
+(`text-white`·`bg-primary`·`px-4`) 정상 포함. `architecture.md` §4·§6 갱신.

@@ -1,0 +1,17 @@
+/* 라이브러리 배포용 CSS 빌드 진입점.
+   @tailwindcss/cli 가 이 파일을 입력으로 dist/styles.css 를 만든다
+   (package.json 의 build 스크립트: tailwindcss -i src/library.css ...).
+
+   theme.css(공유 테마 — tailwindcss + 토큰 + @theme inline)를 그대로 가져오되,
+   @source not 으로 *.stories.tsx 를 Tailwind 스캔에서 제외한다.
+   → 스토리에서만 쓰는 클래스(text-white, px-4 등)가 라이브러리 배포 CSS 로
+     새어 들어가는 것을 막는다. 배포 CSS 에는 실제 컴포넌트가 쓰는 유틸리티만
+     있어야 한다 (스토리는 Storybook 미리보기 전용 dev 산출물).
+
+   Storybook 은 theme.css 를 직접 import 한다(이 파일을 거치지 않음) → 여기의
+   @source not 영향을 받지 않아 스토리 클래스가 정상 생성된다.
+   ⚠️ @source not 을 공유 theme.css 에 두면 Storybook 까지 스토리 클래스를
+      잃으므로, 반드시 이 라이브러리 전용 진입 파일에만 둔다. */
+@import "./theme.css";
+
+@source not "**/*.stories.tsx";

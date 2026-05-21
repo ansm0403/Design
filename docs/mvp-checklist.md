@@ -2,7 +2,7 @@
 
 > 작업할 때마다 완료된 항목을 체크한다.
 > MVP 목표 = Phase 0~4 (1·2순위 컴포넌트) + Phase 5의 CI까지.
-> 최종 갱신: 2026-05-22 — Phase 2 STEP 2-3·2-5 완료 (Box / Flex / Stack 컴포넌트).
+> 최종 갱신: 2026-05-22 — Phase 2 STEP 2-4 완료 (Storybook 10 세팅 + Box/Flex/Stack 스토리).
 
 ---
 
@@ -35,13 +35,13 @@
 - [x] 빌드 검증: dist/styles.css 에 토큰 기반 유틸리티 클래스 포함 (probe 로 확인)
 - [x] clsx + tailwind-merge 설치, cn() 유틸 함수 생성
 - [x] Box (polymorphic as, forwardRef, cn() 기반 className 병합)
-- [ ] Storybook 10 세팅 (react-vite 프레임워크)
-- [ ] Storybook: theme.css 로드 (tokens.css 포함)
-- [ ] Storybook: 글로벌 데코레이터 + toolbar 다크모드 토글
-- [ ] Box 스토리
+- [x] Storybook 10 세팅 (react-vite 프레임워크)
+- [x] Storybook: theme.css 로드 (tokens.css 포함)
+- [x] Storybook: 글로벌 데코레이터 + toolbar 다크모드 토글
+- [x] Box 스토리
 - [x] Flex / Stack
-- [ ] Flex/Stack 스토리
-- [ ] 검증: Storybook에서 토큰 색 렌더 + 다크모드 토글 동작
+- [x] Flex/Stack 스토리
+- [x] 검증: Storybook에서 토큰 색 렌더 + 다크모드 토글 동작 *(사용자 시각 확인 완료)*
 
 ## Phase 3 — 핵심 컴포넌트
 - [ ] cva(class-variance-authority) 설치
@@ -105,3 +105,6 @@
 - 2026-05-22 | STEP 2-1~2-2 + W1 통합 edgecase-review 재수행 (FAIL 0, WARN 2 — 모두 기존 문서화 항목, 신규 0) | W1 개명 정합성 확인, phase-2.md 수정 불필요 | STEP 2-3 예정
 - 2026-05-22 | Phase 2 STEP 2-3·2-5 배치 완료 (cn 유틸 + Box/Flex/Stack 컴포넌트, react devDep·clsx·tailwind-merge 설치, 빌드·tsc·styles.css 유틸리티 검증) | 스토리는 STEP 2-4 로 이월(Storybook 미설치) | STEP 2-4 (Storybook 세팅 + Box/Flex/Stack 스토리 일괄 작성) 예정
 - 2026-05-22 | STEP 2-3·2-5 edgecase-review 수행 (FAIL 0, WARN 1) | polymorphic+forwardRef 캐스팅으로 displayName 누락 → 캐스팅 전 설정으로 수정, docs/edgecase/phase-2.md 기록 | STEP 2-4 예정
+- 2026-05-22 | Phase 2 STEP 2-4 완료 (Storybook 10.4 수동 세팅 + main.ts/preview.tsx + Box/Flex/Stack 스토리, library build·storybook build 검증) | storybook init 비대화형 실패(빌더 자동감지) → 수동 설치 / pnpm 빌드스크립트 차단 → onlyBuiltDependencies 설정 | 토큰색·다크모드 시각 확인은 사용자 대기 → Phase 3 예정
+- 2026-05-22 | STEP 2-4 edgecase-review 수행 (FAIL 0, WARN 1) | 스토리 클래스가 라이브러리 dist/styles.css 로 누출 → src/library.css 분리(@source not)로 수정, docs/edgecase/phase-2.md 기록 | Phase 3 (핵심 컴포넌트) 예정
+- 2026-05-22 | STEP 2-4 edgecase-review 재실행 (사용자 요청, FAIL 0, 신규 WARN 0) | CSS 누출 수정 검증 — dist/styles.css 스토리 클래스 0 재확인 / Storybook 동작 사용자 시각 확인 완료 → Phase 2 종료 | Phase 3 시작 예정
