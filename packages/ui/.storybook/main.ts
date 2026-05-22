@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 // Storybook 메인 설정 — Storybook 이 무엇을, 어떻게 빌드할지 정의한다.
 const config: StorybookConfig = {
   // 스토리 파일 위치. 컴포넌트 옆에 co-locate 한 *.stories.tsx 를 찾는다.
-  stories: ["../src/**/*.stories.@(ts|tsx)"],
+  stories: ["../src/**/*.mdx", "../src/**/*.stories.@(ts|tsx)"],
 
   // addon-docs: 컴포넌트 타입에서 props 표·문서(autodocs 탭)를 자동 생성한다.
   addons: ["@storybook/addon-docs"],

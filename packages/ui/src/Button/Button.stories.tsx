@@ -11,7 +11,8 @@ const sizes = ["sm", "md", "lg"] as const;
 const meta = {
   title: "Components/Button",
   component: Button,
-  tags: ["autodocs"], // 타입에서 props 표가 자동 생성되는 Docs 탭 활성화
+  // Docs 탭은 Button.mdx 가 제공한다 → tags:["autodocs"] 를 두지 않는다.
+  // (둘 다 있으면 같은 Docs 페이지가 중복 생성돼 Storybook 이 인덱싱 에러를 낸다.)
   // argTypes: 각 prop 을 Controls 패널에서 어떤 UI 로 조작할지 지정한다.
   argTypes: {
     variant: { control: "inline-radio", options: variants },
@@ -39,6 +40,11 @@ export const Playground: Story = {};
 // STEP 3-1 요구: variant × color × size 27개 전 조합을 한눈에 보여준다.
 // args 하나로는 27개를 못 그리므로 render 로 직접 그린다.
 export const AllCombinations: Story = {
+  args: {
+    variant: "solid",
+    size: "md"
+  },
+
   render: () => (
     <div className="flex flex-col gap-8">
       {sizes.map((size) => (
@@ -61,7 +67,7 @@ export const AllCombinations: Story = {
         </div>
       ))}
     </div>
-  ),
+  )
 };
 
 // STEP 3-2 — 로딩 상태. 스피너가 뜨고, 클릭은 막히며 aria-busy="true" 가 켜진다.

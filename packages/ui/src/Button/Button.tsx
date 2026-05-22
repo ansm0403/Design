@@ -202,13 +202,18 @@ function ButtonInner(
       {...buttonProps}
     >
       {loading && (
-        // 스피너는 absolute 로 버튼 위에 겹쳐 띄우고, 아래 children 은 invisible 로
-        // 둔다 → 로딩 중에도 버튼 너비가 글자 기준으로 유지돼 레이아웃이 흔들리지 않는다.
+        // 스피너는 absolute 로 버튼 위에 겹쳐 띄운다 (베이스의 relative 가 기준점).
         <span className="absolute inset-0 flex items-center justify-center">
           <Spinner />
         </span>
       )}
-      <span className={cn(loading && "invisible")}>{children}</span>
+      {/* 로딩 중 children 은 opacity-0 으로 "시각적으로만" 숨긴다.
+          - 공간은 그대로 차지 → 버튼 너비가 유지돼 레이아웃 시프트가 없다.
+          - ⚠️ invisible(visibility:hidden)·display:none 은 요소를 접근성 트리에서
+            제거해, 로딩 중 버튼의 accessible name(라벨)이 사라진다 → 스크린리더가
+            어떤 버튼인지 못 읽는다(axe button-name 위반). opacity-0 은 접근성
+            트리에 남으므로 라벨이 보존되고, 로딩 사실은 aria-busy 가 전달한다. */}
+      <span className={cn(loading && "opacity-0")}>{children}</span>
     </button>
   );
 }

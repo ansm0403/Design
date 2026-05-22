@@ -49,7 +49,8 @@ function ToastDemo() {
 const meta: Meta<typeof Toast> = {
   title: "Components/Toast",
   component: Toast,
-  tags: ["autodocs"], // 타입에서 props 표가 자동 생성되는 Docs 탭 활성화
+  // Docs 탭은 Toast.mdx 가 제공한다 → tags:["autodocs"] 를 두지 않는다.
+  // (둘 다 있으면 같은 Docs 페이지가 중복 생성돼 Storybook 이 인덱싱 에러를 낸다.)
   // 모든 스토리를 ToastProvider 로 감싼다 — useToast 가 동작하려면 필수.
   decorators: [
     (Story) => (

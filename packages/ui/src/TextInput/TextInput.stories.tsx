@@ -25,7 +25,8 @@ const SearchIcon = () => (
 const meta: Meta<typeof TextInput> = {
   title: "Components/TextInput",
   component: TextInput,
-  tags: ["autodocs"], // 타입에서 props 표가 자동 생성되는 Docs 탭 활성화
+  // Docs 탭은 TextInput.mdx 가 제공한다 → tags:["autodocs"] 를 두지 않는다.
+  // (둘 다 있으면 같은 Docs 페이지가 중복 생성돼 Storybook 이 인덱싱 에러를 낸다.)
   argTypes: {
     label: { control: "text" },
     placeholder: { control: "text" },

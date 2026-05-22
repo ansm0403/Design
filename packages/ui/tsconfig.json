@@ -6,8 +6,14 @@
     // 실제 번들/타입선언(.d.ts) 생성은 tsdown 이 담당한다.
     // 이 tsconfig 는 에디터 자동완성·타입검사 전용이므로
     // tsc 가 실수로 .js 파일을 내보내지 않도록 막는다.
-    "noEmit": true
+    "noEmit": true,
+    // Vitest 전역(describe/it/expect)의 타입. vitest.config.ts 의 globals:true 와 짝.
+    // ⚠️ types 를 지정해도 react 등은 명시적 import 라 영향 없음 — 이 배열은
+    //    "전역으로 자동 포함되는 @types/*" 만 제한한다.
+    "types": ["vitest/globals"]
   },
-  // tokens 와 달리 ui 에는 scripts 폴더가 없어 src 만 타입검사 대상.
-  "include": ["src"]
+  // src 외에 Vitest 설정·셋업 파일도 타입검사 대상에 넣는다.
+  // 셋업 파일을 프로그램에 포함해야 jest-dom·vitest-axe 의 매처 타입 확장이
+  // 테스트 파일 전역에서 보인다.
+  "include": ["src", "vitest.config.ts", "vitest.setup.ts"]
 }

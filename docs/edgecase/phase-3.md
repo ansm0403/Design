@@ -46,10 +46,9 @@ solid 버튼의 글자 대비가 확보된다. 컴포넌트는 light/dark 를 �
 없이 inverse 색으로 재사용할 수 있다 — 역할명이 약간의 의미 확장이긴 하나, 토큰
 원칙과 다크모드 정합성을 모두 만족하는 가장 저렴한 선택이다.
 
-⚠️ 후속: `architecture.md` §6 [4] 의 예시 스니펫은 여전히 `text-white` 다. 이는
-교육용 의사코드라 당장 빌드에 영향은 없으나, 코드와의 일관성을 위해 추후
-`text-background` 로 정정하는 것이 바람직하다(사용자 판단에 위임 — 헌법 문서라
-임의 수정하지 않음).
+✅ 해결 (2026-05-22): `architecture.md` §6 [4] 의 예시 스니펫을 `text-white` →
+`text-background` 로 정정해 실제 Button 코드와 일치시켰다(사용자가 "문서와 코드가
+다르면 코드 기준으로 수정" 을 명시 지시 — STEP 3-1~3-6 문서 동기화 작업의 일부).
 
 ⚠️ 잔여 한계(엣지케이스 아님, 메모): light 테마 solid `primary`(blue[500] 위 밝은
 글자)의 대비는 약 ~3.9:1 로 WCAG AA(본문 4.5:1) 경계 미만이다. 이는 `text-white`/
@@ -107,3 +106,73 @@ STEP 3-1 범위 밖, 별도 후속 작업으로 처리하고 `phase-2.md` 에도
 단어 유틸리티명(`outline`·`flex`·`grid`·`block`·`hidden`·`table`·`fixed`·`static`·
 `container`·`truncate`·`italic`·`underline` 등)과 겹치면 같은 dead CSS 누출이
 생긴다. 기능 영향은 없으나, 가능하면 그런 이름은 피하거나 누출을 인지하고 둔다.
+
+---
+
+#### STEP 3-2 — Button (loading / 접근성)
+
+##### ❌ 로딩 중 버튼이 접근 가능한 이름(accessible name)을 잃는다
+
+**Problem**: 로딩 상태에서 children(버튼 라벨)을 `invisible`(Tailwind `visibility:
+hidden`)로 숨긴다. `visibility:hidden` 요소는 *접근성 트리에서 제거*되어, accessible
+name 계산("name from content")에서 빈 문자열로 취급된다. 스피너 SVG 는
+`aria-hidden="true"` 라 이름에 기여하지 않는다 → **로딩 중 버튼의 accessible name 이
+빈 값**이 된다. 스크린리더는 "버튼, 바쁨" 만 읽고 *어떤* 버튼인지 알리지 못한다.
+STEP 4-3 의 vitest-axe `button-name` 규칙에서도 위반으로 잡힌다 — STEP 3-2 의
+목표("기본 접근성")·`architecture.md` §2 원칙 5(접근성 기본)에 정면으로 어긋난다.
+
+**Before** (`Button.tsx` — 로딩 시 children 래퍼):
+```tsx
+<span className={cn(loading && "invisible")}>{children}</span>
+```
+
+**After**:
+```tsx
+// opacity-0 은 시각적으로만 투명하게 만들 뿐 접근성 트리에는 그대로 남는다
+// → 로딩 중에도 버튼 라벨이 accessible name 으로 유지된다. 레이아웃 공간도 유지.
+<span className={cn(loading && "opacity-0")}>{children}</span>
+```
+
+**Why**: 너비 보존을 위해 children 을 화면에서 숨기되 **공간은 차지**시켜야 한다.
+세 후보의 차이 — `display:none` 은 공간까지 없애 탈락, `visibility:hidden`(=`invisible`)
+은 공간은 남기나 접근성 트리에서 빠진다, `opacity:0`(=`opacity-0`)만이 "공간 유지 +
+접근성 트리 유지 + 시각적 투명" 셋을 모두 만족한다. 스피너는 `aria-hidden` 으로 두고
+로딩 사실은 `aria-busy="true"` 가 전달하므로, 라벨만 살리면 "라벨 + 바쁨" 이 정상
+안내된다. (ToggleButton 은 로딩/스피너가 없어 이 문제에 해당되지 않는다.)
+
+**해결 (2026-05-22)**: `Button.tsx` 의 children 래퍼를 `invisible` → `opacity-0` 으로
+수정하고 관련 주석을 갱신. `tsc -p tsconfig.json` 통과, `build` 후 `dist/styles.css`
+에 `.opacity-0` 생성 확인. (사용자 승인 후 적용.)
+
+---
+
+#### STEP 3-5 — TextInput Addons
+
+##### ⚠️ disabled 된 TextInput 이 addon 내부의 인터랙티브 요소까지 비활성화하지는 못한다
+
+**Problem**: `disabled` prop 은 네이티브 `<input>` 만 비활성화하고 외곽 래퍼는
+`opacity-60 cursor-not-allowed` 로 흐려진다. 그러나 `leftAddon`/`rightAddon` 으로
+넘어온 임의의 `ReactNode` 안에 버튼 같은 인터랙티브 요소가 있으면(예:
+`WithRightAddon` 스토리의 비밀번호 표시 토글), 그 요소는 **여전히 클릭·포커스
+가능**하다. 시각적으로는 흐려 보이지만 동작은 살아 있어 "비활성처럼 보이지만 눌리는"
+불일치가 생긴다.
+
+**Before / After**:
+```tsx
+// 현재: addon 컨테이너는 disabled 와 무관하게 항상 동작한다.
+const addonClass = "flex items-center px-3 text-muted";
+
+// 완화 옵션 A (권장·근본): 소비자가 addon 으로 넘기는 인터랙티브 요소를 직접
+//   disabled 처리한다. TextInput 은 임의 ReactNode 의 내부를 알 수 없으므로
+//   이것이 근본 해법 — 문서/주석으로 안내한다.
+// 완화 옵션 B (부분): disabled 시 addon span 에 pointer-events-none 을 더해
+//   마우스 클릭만 차단한다(키보드 Tab 도달은 여전 — 완전한 해결은 아님).
+```
+
+**Why**: TextInput 은 addon 을 불투명한 `ReactNode` 로 받으므로 그 내부 컨트롤의
+disabled 상태를 일반적으로 제어할 수 없다. 근본 해결은 소비자 책임(addon 콘텐츠를
+함께 disabled)이고, 컴포넌트 차원에서는 `pointer-events-none` 으로 마우스 클릭만
+부분 차단할 수 있다. MVP 범위에서는 **한계를 문서화**하고, 필요 시 옵션 B 를 후속
+적용한다. (FAIL 이 아닌 WARN — 기본 사용 경로인 "label + input + 비인터랙티브
+addon(아이콘·단위 텍스트)" 에서는 문제가 없고, addon 에 인터랙티브 요소를 넣는
+경우에만 발생한다.)

@@ -1,0 +1,88 @@
+import { Meta, Canvas, ArgTypes } from "@storybook/addon-docs/blocks";
+import * as ToastStories from "./Toast.stories";
+
+<Meta of={ToastStories} />
+
+# Toast
+
+화면 우하단에 잠깐 나타났다 사라지는 알림 메시지. **Provider + Context + Hook** 패턴으로
+전역 상태를 관리한다.
+
+---
+
+## 설치 방법
+
+앱 최상단을 `ToastProvider`로 감싸고, 어디서든 `useToast`로 호출한다.
+
+```tsx
+// 앱 최상단 (예: App.tsx)
+import { ToastProvider } from "@my-ds/ui";
+
+export default function App() {
+  return (
+    <ToastProvider>
+      {/* 나머지 앱 */}
+    </ToastProvider>
+  );
+}
+```
+
+```tsx
+// 토스트를 띄우고 싶은 컴포넌트 어디서나
+import { useToast } from "@my-ds/ui";
+
+function SaveButton() {
+  const toast = useToast();
+  return (
+    <button onClick={() => toast.show("저장되었습니다.", { variant: "success" })}>
+      저장
+    </button>
+  );
+}
+```
+
+> **왜 Provider인가?** — 토스트는 어느 컴포넌트에서도 띄울 수 있어야 한다. Context로
+> 전역 `show`·`dismiss` API를 내려주면, 깊은 컴포넌트도 prop drilling 없이 사용 가능.
+
+---
+
+## 인터랙티브 데모
+
+버튼을 눌러 토스트를 직접 띄워볼 수 있다. 4초 뒤 자동 소멸하거나 ✕로 즉시 닫힌다.
+
+<Canvas of={ToastStories.Playground} />
+
+---
+
+## Variant 갤러리
+
+`info` / `success` / `error` 세 가지 변형의 시각적 차이를 정적으로 비교한다.
+
+> **구현 노트** — `info`는 전용 토큰 없이 `primary`(파랑) 토큰을 재사용한다.
+> 독립 토큰이 필요해지면 Phase 1을 재방문해 추가할 수 있다.
+
+<Canvas of={ToastStories.Appearance} />
+
+---
+
+## API 요약
+
+| 메서드 | 시그니처 | 설명 |
+|---|---|---|
+| `toast.show` | `(message, { variant?, duration? }) → id` | 토스트를 띄운다. `duration <= 0` 이면 영구 |
+| `toast.dismiss` | `(id) → void` | 특정 토스트를 즉시 닫는다 |
+
+---
+
+## 접근성 포인트
+
+- ToastViewport는 항상 렌더된 `aria-live="polite"` 영역 — 토스트가 추가될 때
+  스크린리더가 메시지를 자동으로 읽는다.
+- 뷰포트는 `pointer-events-none`이라 빈 공간이 뒤 UI를 막지 않는다.
+- 닫기 버튼은 `aria-label="알림 닫기"`를 갖는다.
+
+---
+
+## Toast 컴포넌트 Props
+
+<ArgTypes of={ToastStories} />

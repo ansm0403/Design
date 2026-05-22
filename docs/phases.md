@@ -714,6 +714,27 @@ Button에 추가한다.
 - 로딩 중엔 중복 클릭을 막아야 함 (disabled + aria-busy).
 - `focus-visible`: 마우스 클릭 시엔 포커스 링 안 보이고, 키보드 탐색 시엔 보임.
 
+**진행 기록 (2026-05-22, STEP 3-2·3-3 배치 — git worktree `phase3/button`, 커밋 7530972)**
+- `isLoading` prop 추가. 스피너는 인라인 SVG(`animate-spin`, `stroke`/`fill` =
+  `currentColor` → 버튼 글자색 토큰을 그대로 상속, `aria-hidden`).
+- ⚠️ **스피너 오버레이 + 너비 보존**: 스피너를 `absolute inset-0` 로 버튼 위에
+  겹치고 children 은 `invisible` 로 자리만 차지시킨다 → 로딩 중에도 버튼 너비가
+  글자 기준으로 유지돼 레이아웃 시프트가 없다. 베이스에 `relative` 추가(겹침 기준점).
+- focus 스타일: 베이스에 `focus-visible:outline-none focus-visible:ring-2
+  focus-visible:ring-offset-2 focus-visible:ring-offset-background`. ring 색은
+  color 단독으로 정해지므로 `color` variant 가 `focus-visible:ring-{color}` 를
+  직접 보유한다(STEP 3-1 의 빈 문자열에서 변경). 키보드 Tab 포커스에서만 링 표시.
+- ⚠️ **disabled 처리 = 하이브리드 2경로**: `disabled` prop → 네이티브 `disabled`
+  (포커스 자체가 불가). `aria-disabled` prop·`isLoading` → "부드러운 비활성"
+  (포커스는 유지, 클릭만 JS 로 차단). spec 의 "aria-disabled (실제 disabled 와
+  달리 포커스 유지)" 를 별도 경로로 구현 — 둘을 한 버튼에 동시에 걸지 않는다.
+- 시각: 순수 비활성(`isDisabled && !loading`)일 때만 `opacity-50 cursor-not-allowed`
+  (로딩은 스피너가 신호라 안 흐리게), 로딩 중에는 `cursor-wait`.
+- 동작 로직(클릭 차단·`aria-busy`·`aria-disabled`)은 STEP 3-3 의 `useButton` 훅으로
+  바로 분리해 구현(3-2·3-3 이 한 커밋). `aria-disabled` 속성값은 boolean·"true"
+  문자열 모두 정규화해 훅에 전달.
+- 스토리: `Loading`·`Disabled`·`DisabledVariants`(native disabled ↔ aria-disabled 비교).
+
 ---
 
 ## STEP 3-3. Button — headless 분리 (개념 심화)
@@ -736,6 +757,32 @@ headless 패턴의 이점을 주석으로 설명해줘.
 
 > ⚡ 시간이 부족하면 이 STEP은 백로그로 미뤄도 된다. Toast(STEP 3-6)가 더 우선.
 
+**진행 기록 (2026-05-22, STEP 3-2·3-3 배치 — 같은 커밋 7530972)**
+- ⚠️ 이 STEP 은 위 "백로그로 미뤄도 된다" 표시였으나 **실제로 완료됨** —
+  mvp-checklist 의 해당 줄을 체크 처리했다.
+- `useButton.ts` 신규 — headless 동작 훅. `UseButtonOptions{ isLoading, disabled,
+  ariaDisabled, onClick }` → `UseButtonResult{ buttonProps, isLoading, isDisabled }`.
+  `buttonProps`(`disabled`·`onClick`·`aria-busy`·`aria-disabled`)를 `<button>` 에
+  그대로 spread 한다.
+- ⚠️ **클릭 차단에 `stopPropagation` 까지**: 부드러운 비활성(`ariaDisabled ||
+  isLoading`)일 때 `preventDefault()` + **`stopPropagation()`** 를 함께 호출한다.
+  네이티브 disabled 버튼은 클릭 이벤트 자체가 안 생겨 부모로 버블링도 안 되는데,
+  부드러운 비활성이 그 동작을 흉내내려면 전파까지 막아 상위 `onClick` 도 차단해야
+  한다. `handleClick` 은 `useCallback` 으로 안정화.
+- `Button.tsx` 를 useButton 사용하도록 리팩터링 — 시각 컴포넌트는 스피너·className
+  만, 동작은 전부 훅에 위임.
+- `ToggleButton.tsx` 신규 — 제어/비제어 양쪽 지원(`pressed`/`defaultPressed`/
+  `onPressedChange`), `aria-pressed` 자동 계산. 눌림=solid·안눌림=outline 으로
+  `buttonStyles` 표를 재사용 → 색·크기 체계가 Button 과 완전 일치. 동작(useButton)
+  + 룩(buttonStyles) 재사용 + 토글 로직만 신규 작성 = headless 패턴의 실증.
+- ⚠️ `buttonStyles`·`ButtonVariantProps` 가 `Button.tsx` 에서 export 됨(ToggleButton
+  재사용용). 단 `Button/index.ts` 배럴에는 미포함 → 패키지 공개 API 가 아닌 폴더
+  내부 공유다.
+- `ToggleButton` 은 `aria-pressed` 를 눌림 상태에서 자동 계산하므로
+  `Omit<...,"aria-pressed">` 로 외부 덮어쓰기를 막고, variant 대신 `color`/`size` 만
+  `Pick` 으로 노출(variant 는 눌림 상태가 결정).
+- 스토리: `Toggle`(Button.stories.tsx 에 포함).
+
 ---
 
 ## STEP 3-4. TextInput (1) — Controlled 개념
@@ -757,6 +804,22 @@ Controlled vs Uncontrolled 차이를 주석으로 간단히.
 - **Controlled**: value를 React state로 관리. 폼 검증·제어에 유리. 기본 권장.
 - 접근성: label과 input을 id로 연결, 에러는 aria-invalid + aria-describedby.
 
+**진행 기록 (2026-05-22, STEP 3-4·3-5 배치 — git worktree `phase3/textinput`, 커밋 82fd8bd)**
+- `TextInput.tsx` 신규 — 입력값 state 를 스스로 두지 않는 presentational 컴포넌트.
+  `value`/`onChange`/`defaultValue` 가 모두 `...rest` 로 네이티브 `<input>` 에
+  전달돼 Controlled·Uncontrolled 양쪽이 동작한다(권장은 Controlled).
+- `cva` `fieldStyles` — 외곽 상자(테두리·배경·포커스 링)를 `invalid`(error 유무)·
+  `disabled` 두 boolean variant 표로 관리.
+- ⚠️ **포커스 링은 래퍼가 `focus-within:` 으로**: 자식 `<input>` 이 포커스를 받아도
+  *래퍼* 가 링을 그린다 → addon(STEP 3-5)이 있든 없든 동일하게 동작한다. input
+  자신은 `border-0 bg-transparent outline-none` 으로 테두리·링을 제거.
+- 접근성: `useId` 로 안정적 id 생성 → `label htmlFor` ↔ `input id` 연결,
+  설명문(error/helper) id ↔ `aria-describedby`. `error` 있으면 `aria-invalid`.
+  소비자가 직접 넘긴 `aria-describedby` 와 우리 id 를 공백으로 병합(둘 다 보존).
+- 설명문은 하나만 — error 가 있으면 helperText 를 가린다.
+- Flex 기반(`Box → Flex → TextInput` 재사용 체인).
+- 스토리: `Playground`(controlled)·`Default`·`WithError`·`Disabled`.
+
 ---
 
 ## STEP 3-5. TextInput (2) — Addons (응용)
@@ -769,6 +832,17 @@ TextInput에 leftAddon / rightAddon prop을 추가한다.
 (검색 아이콘, 단위 표시, 비밀번호 표시 토글 등을 넣을 수 있게)
 레이아웃이 깨지지 않게 Flex 기반으로 감싸고, 스토리 추가.
 ```
+
+**진행 기록 (2026-05-22, STEP 3-4·3-5 배치 — 같은 커밋 82fd8bd)**
+- `leftAddon`/`rightAddon` prop(`ReactNode`) — `TextInput` 이 처음부터 addon 지원을
+  포함해 작성됐다(3-4·3-5 가 한 커밋). Flex(`align="stretch"`)로
+  `[leftAddon | input | rightAddon]` 가로 배치, addon 컨테이너는 `px-3 text-muted`
+  (SVG 아이콘이 `currentColor` 로 muted 색을 상속).
+- ⚠️ addon 이 붙는 쪽의 input 패딩 제거(`leftAddon` → `pl-0`, `rightAddon` →
+  `pr-0`) — 안 그러면 addon 의 `px-3` 과 input 의 `px-3` 이 겹쳐 간격이 두 배가 된다.
+- `min-w-0` 로 flex 자식 input 이 좁은 폭에서 컨테이너를 넘치지 않게 한다.
+- 스토리: `WithLeftAddon`(검색 아이콘)·`WithRightAddon`(비밀번호 표시 토글 버튼)·
+  `WithBothAddons`(`https://` 접두 + `.com` 접미).
 
 ---
 
@@ -795,8 +869,39 @@ Context/Provider 패턴을 주석으로 설명해줘.
 - `useToast` 로 어디서든 토스트 호출. 전역 상태 관리의 기본형.
 - `aria-live`: 동적으로 나타나는 메시지를 스크린리더가 읽게.
 
+**진행 기록 (2026-05-22, STEP 3-6 — git worktree `phase3/toast`, 커밋 f39eb33)**
+- `ToastProvider.tsx` — Context + Provider. `toasts` 목록 state, `show(message,
+  options) → id` / `dismiss(id)` API. id 는 `useRef` 카운터(리렌더와 무관),
+  자동소멸 타이머는 `useRef(Map)` 에 보관 → 수동 닫기·언마운트 시 `clearTimeout`
+  으로 정리(메모리 누수·죽은 setState 방지). API 객체는 `useMemo`+`useCallback`
+  으로 안정화해 불필요한 소비자 리렌더를 막는다.
+- **ToastViewport**: `fixed right-0 bottom-0`, `aria-live="polite"`(토스트 추가 시
+  스크린리더가 낭독), `pointer-events-none`(빈 영역이 뒤 UI 클릭을 막지 않게) +
+  토스트만 `pointer-events-auto` 로 되살림. 라이브 영역은 toasts 가 비어도 항상 렌더.
+- `useToast.ts` — `useContext` 소비자 훅. Provider 밖에서 호출하면 null 가드로
+  명확한 에러를 던진다.
+- `Toast.tsx` — 단일 토스트 시각. `cva` `toastStyles`, `variant` success/error/info
+  → 왼쪽 굵은 테두리(`border-l-4`) 색 + 색점. variant 가 단독으로 결과를 정하므로
+  Button 과 달리 compoundVariants 가 필요 없다. 닫기 ✕ 버튼(`aria-label="알림 닫기"`).
+- 자동 소멸 기본 `DEFAULT_DURATION` 4000ms, `duration <= 0` 이면 영구(수동 닫기까지).
+- ⚠️ **`info` 전용 토큰 미추가**: STEP 1-2 진행기록의 "info 토큰은 STEP 3-6 에서
+  추가" 계획과 달리, 실제 구현은 tokens 패키지를 건드리지 않고 info variant 에
+  기존 `primary`(파랑) 토큰을 재사용했다. `tokens/colors.ts`·`theme.css` 변경 없음
+  → 작업 범위를 ui 패키지로 한정. (전용 info 토큰이 필요해지면 추후 Phase 1 재방문.)
+- spec 의 "role=status 또는 aria-live=polite" 중 **`aria-live="polite"`** 채택.
+- 스토리: `Playground`(버튼 클릭 → 토스트, `ToastProvider` decorator)·`Appearance`
+  (success/error/info 3종 정적 비교).
+
 **Phase 3 완료 기준**: Button(variant/loading/a11y), TextInput(addon 포함),
 Toast가 Storybook에서 모두 동작 + 다크모드 정상.
+
+**Phase 3 완료 기록 (2026-05-22)**: STEP 3-1~3-6 전부 구현 완료 — git worktree
+3개 브랜치(`phase3/button`·`phase3/textinput`·`phase3/toast`)에서 작업 후 main 에
+머지(커밋 9ed8963·7530972·82fd8bd·f39eb33). `tsc -p tsconfig.json` 통과,
+`pnpm --filter @my-ds/ui build` 통과 — `dist/index.d.ts` 에 Box·Flex·Stack·Button·
+ToggleButton·TextInput·Toast·ToastProvider·useButton·useToast 등 전 공개 API 노출
+확인. 다크모드·Storybook 의 실제 동작 시각 확인은 사용자 몫. ⚠️ `edgecase-review`
+는 STEP 3-1 만 수행됨 — 3-2~3-6 은 미수행(Phase 4 진입 전 일괄 점검 권장).
 
 ---
 ---
@@ -830,6 +935,48 @@ packages/ui 에 Vitest + React Testing Library + vitest-axe 를 세팅한다.
 - **jsdom 고정**: `happy-dom` 은 `Node.prototype.isConnected` 버그로 axe-core(vitest-axe)와 비호환.
 - **vitest-axe**: jest-axe의 Vitest 포크. jest-axe를 vitest에 직접 쓰면 타입/환경 충돌.
 
+**진행 기록 (2026-05-22, STEP 4-1 완료)**
+- 설치(ui devDependencies): `vitest@3.2.4`·`@testing-library/react@16.3.2`·
+  `@testing-library/jest-dom@6.9.1`·`@testing-library/user-event@14.6.1`·
+  `jsdom@29.1.1`·`vitest-axe@0.1.0` + **`@testing-library/dom@10.4.1`**.
+- ⚠️ **`@testing-library/dom` 명시 설치**: 명세 패키지 목록엔 없으나, TL/react 16 은
+  `@testing-library/dom` 을 peerDependency 로 요구한다(v15 까지는 일반 dependency 였음).
+  auto-install-peers 에 기대지 않고 devDependency 로 명시 설치.
+- ⚠️ **Vitest 는 3.x 유지**: 최신은 4.1.7 이나 CLAUDE.md/architecture.md 가 3.x 로
+  핀했다 — 3.x 최신인 **3.2.4** 설치(스펙 준수 + vitest-axe 0.1.0 호환 안전). 4.x 로
+  올리는 건 설계 결정 변경이라 architecture.md 선수정이 필요해 보류.
+- ⚠️ **vitest 3 ↔ Storybook vite 8 충돌 없음**: vitest 3 은 `vite` 를 peerDependency
+  가 아니라 자체 dependency 로 번들한다(vitest 4 는 vite 를 peer 로 둠). 따라서
+  Storybook 이 깐 `vite@8` 과 무관하게 동작 — 검증으로 확인.
+- `vitest.config.ts`: `environment:"jsdom"` + `globals:true` + `setupFiles`.
+  `vitest.setup.ts`: `@testing-library/jest-dom/vitest` import + vitest-axe 매처
+  수동 등록(아래 함정 참조).
+- ⚠️ **jest-dom 은 `/vitest` 진입점 사용**: 명세의 `import "@testing-library/jest-dom"`
+  대신 **`@testing-library/jest-dom/vitest`** — Vitest 의 `expect` 에 매처·타입
+  (`declare module "vitest"`)을 함께 확장하는 공식 경로다. 진입점 없는 import 는
+  매처 타입이 Vitest expect 로 확장되지 않을 수 있다.
+- ⚠️ **vitest-axe 0.1.0 의 `extend-expect` 진입점이 깨져 있음** → `dist/matchers.js`
+  에서 매처를 직접 가져와 `expect.extend` 로 수동 등록 + `declare module "vitest"`
+  로 타입 직접 augment. 상세는 `docs/edgecase/phase-4.md` 참조.
+- tsconfig: `compilerOptions.types: ["vitest/globals"]`(describe/it/expect 전역
+  타입) + `include` 에 `vitest.config.ts`·`vitest.setup.ts` 추가(셋업 파일의 매처
+  타입 augmentation 이 테스트 파일 전역에 보이도록). `types` 배열은 "자동 포함되는
+  @types/*" 만 제한 — `react` 등 명시적 import 타입엔 영향 없음(tsc 통과로 확인).
+- ⚠️ **jsdom 29.1.1 의 Node 하한**: engines 가 `^20.19.0` — 현 Node 20.19.0 이
+  정확히 하한선이라 통과하나 여유가 0이다(Node 를 20.18 이하로 내리면 깨짐).
+  프로젝트 Node 가 의도적으로 20.19.0 에 핀돼 있어 수용.
+- ⚠️ **jsdom canvas 미구현 경고**: 테스트 실행 시 `Not implemented:
+  HTMLCanvasElement's getContext()` 경고 — axe 의 color-contrast 규칙이 canvas 를
+  쓰기 때문. 무해하며 STEP 4-3 의 색 대비 검사 한계로 이어진다(`phase-4.md` 참조).
+- 검증: 임시 스모크 테스트(`src/__env-smoke.test.ts`)로 globals·jsdom·jest-dom
+  매처·vitest-axe 매처 4항목 확인 → `vitest run` 4/4 통과 + `tsc` 클린 → 스모크
+  테스트 삭제. `pnpm --filter @my-ds/ui build` 도 클린(테스트 설정 변경이 빌드
+  무영향) 재확인.
+- ⚠️ **STEP 4-2 선행 작업**: `src/library.css` 의 `@source not` 이 `*.stories.tsx`
+  만 제외 → `src/` 에 들어올 `*.test.tsx` 가 라이브러리 CSS 빌드에 스캔돼 테스트
+  클래스가 누출된다. STEP 4-2 는 첫 테스트 파일 추가 전에 `@source not
+  "**/*.test.{ts,tsx}"` 를 `library.css` 에 보강할 것(`phase-4.md` 참조).
+
 ---
 
 ## STEP 4-2. 컴포넌트 단위 테스트
@@ -846,6 +993,25 @@ packages/ui 에 Vitest + React Testing Library + vitest-axe 를 세팅한다.
 - `getByRole`, `getByLabelText` 우선 사용 (접근성 + 견고한 테스트).
 - 구현 디테일이 아니라 "동작"을 테스트.
 
+**진행 기록 (2026-05-22, 선행+STEP 4-2·4-3 배치)**
+- 선행 작업: `src/library.css` 에 `@source not "**/*.test.ts"` / `@source not "**/*.test.tsx"` 2줄 추가
+  (phase-4.md WARN 3 해결 — 테스트 파일의 클래스 문자열이 dist/styles.css 로 누출되지 않도록).
+- `Button.test.tsx` 신규 — `describe("Button")`:
+  (1) 클릭 → onClick 호출. (2) disabled → toBeDisabled + onClick 미호출.
+  (3) isLoading → aria-busy="true" + 클릭 차단 + `getByRole({name:"저장"})` 성공(accessible name
+      보존 — phase-3 FAIL 수정 회귀 가드). (4) aria-disabled → 클릭 차단 + 포커스 유지(button.focus()
+      후 toHaveFocus). (5) `it.each` 로 solid/outline/size 클래스 단언(`toHaveClass`).
+- `TextInput.test.tsx` 신규 — `describe("TextInput")`:
+  (1) 비제어 onChange + toHaveValue. (2) getByLabelText 성공 자체가 label↔input 연결 증명.
+  (3) error → aria-invalid="true" + toBeInTheDocument + toHaveAccessibleDescription(aria-describedby).
+  (4) error 없음 → not.toHaveAttribute("aria-invalid"). (5) disabled → toBeDisabled.
+- ⚠️ **variant 클래스 단언의 한계**: `toHaveClass("bg-primary")` 는 cva+twMerge 가 실제로 그 클래스를
+  출력하는지를 검사하는 구현 단언이다. CLAUDE.md "동작 테스트" 원칙에서 벗어나지만 STEP 명세가 명시적으로
+  요구해 포함. 향후 cva 구조 변경 시 깨질 수 있다 — 안정적인 토큰 클래스명만 단언 대상으로 선정.
+- ⚠️ **비제어 TextInput onChange 테스트**: `value` 미전달 → 비제어. onChange 는 정상 발화하고
+  toHaveValue 도 DOM 값으로 단언 가능. "Controlled" 패턴의 테스트는 harness 가 필요해 보류
+  (over-engineering 회피 — 단위 테스트는 onClick/onChange 호출이 핵심).
+
 ---
 
 ## STEP 4-3. 접근성 테스트
@@ -860,6 +1026,23 @@ expect(results).toHaveNoViolations()
 ```
 
 **Phase 4 완료 기준**: `pnpm --filter @my-ds/ui test` 전부 통과.
+
+**진행 기록 (2026-05-22, 선행+STEP 4-2·4-3 배치)**
+- Button.test.tsx / TextInput.test.tsx 에 `describe("접근성 (vitest-axe)")` 블록 추가.
+  Toast.test.tsx 신규(a11y 전용). 총 axe 테스트 5건.
+- `import { axe } from "vitest-axe"` — 루트 진입점 정상(dist/index.d.ts 가 `export { axe }` 로
+  값 export, deep import 불필요). `toHaveNoViolations` 는 setup.ts 등록분 사용.
+- ⚠️ **region best-practice 규칙 → `<main>` 래퍼 채택**: axe-core 의 `region` 규칙이 "모든
+  콘텐츠는 landmark 안에" 를 요구한다. 단독 컴포넌트를 맨몸으로 렌더하면 위반 위험 → 모든 axe
+  테스트에서 `<main>` 으로 감싸 landmark 를 제공(규칙 disable 없이 해결). 실제 17/17 통과로 확인.
+- ⚠️ **canvas stderr 경고**: `Not implemented: HTMLCanvasElement's getContext()` — axe의
+  color-contrast 규칙이 canvas 를 시도하나 jsdom 미구현. 경고는 무해하고 테스트는 통과함
+  (phase-4.md 기존 기록과 동일). 레이블·role·aria 구조는 정상 검사.
+- ⚠️ **Toast 는 맨몸 `<Toast>` 만 테스트**: aria-live 영역은 ToastProvider 의 뷰포트에 있어
+  STEP 4-3 명세("Toast 의 접근성")의 핵심 시각 컴포넌트만 대상으로 삼음. ToastProvider/useToast
+  행동 테스트는 이번 배치 명세 밖 — 필요 시 후속 배치 추가 가능.
+- 최종 검증: `vitest run` 17/17 통과 / `tsc` 클린 / `build` 클린 / `dist/styles.css` 테스트 클래스 누출 0.
+  **Phase 4 완료.**
 
 ---
 ---
@@ -876,6 +1059,31 @@ expect(results).toHaveNoViolations()
 Storybook autodocs 를 활성화하고 MDX 문서 페이지를 작성한다.
 각 컴포넌트의 props 표, 사용 예시, variant 갤러리 포함.
 ```
+
+**진행 기록 (2026-05-22, STEP 5-1·5-2 배치 완료)**
+- autodocs(`tags:["autodocs"]`)는 STEP 2-4 에서 활성화돼 있었으나, 5-1 에서
+  `<Meta of={Stories}/>` 커스텀 MDX 가 각 컴포넌트의 Docs 탭을 제공하므로
+  세 CSF 파일에서 `tags:["autodocs"]` 를 **제거**했다. ⚠️ SB10 은 커스텀 MDX 와
+  autodocs 가 공존하면 교체가 아니라 인덱싱 충돌로 처리한다(설계 단계의 잘못된
+  가정 — `docs/edgecase/phase-5.md` FAIL 참조).
+- `@storybook/addon-docs/blocks` — Doc Block 정식 export 경로(SB 10.4 `package.json`
+  exports 확인). `Meta`·`Canvas`·`Controls`·`ArgTypes` 모두 export 됨.
+- `.storybook/main.ts` 의 `stories` glob 에 `"../src/**/*.mdx"` 추가(MDX 없이는
+  Storybook 이 파일 자체를 인식하지 못함 — 가장 흔한 함정).
+- `src/library.css` 에 `@source not "**/*.mdx"` 추가(STEP 2-4 스토리·STEP 4-2 테스트와
+  동일 패턴 — MDX 발 Tailwind 클래스가 `dist/styles.css` 로 새는 것을 예방).
+- MDX 3파일 신규: `Button/Button.mdx`·`TextInput/TextInput.mdx`·`Toast/Toast.mdx`.
+  기존 스토리를 `<Canvas of={Story}/>` 로 재사용 — 예시 코드 중복 없음.
+  Button: Playground + Controls + AllCombinations 갤러리 + 로딩/비활성 + ToggleButton.
+  TextInput: Playground + Controls + 상태 갤러리(3종) + Addon 갤러리(3종).
+  Toast: Provider 설치 코드 블록 + Playground(인터랙티브) + Appearance 갤러리.
+- ⚠️ **Toast.mdx 미사용 Controls**: Toast Playground 는 `render: () => <ToastDemo/>`
+  방식이라 arg-binding 이 없다 — `<Controls>` 를 쓰면 빈 표. import 에서 제거.
+  Button·TextInput 은 Playground 가 arg 기반이라 `<Controls>` 사용이 올바르다
+  (`docs/edgecase/phase-5.md` 참조).
+- 검증: `tsc` 클린 / `pnpm -r build` 클린 / `vitest run` 17/17 / `dist/styles.css`
+  MDX 클래스 누출 0 / `build-storybook` 성공(MDX 인덱싱·컴파일 통과).
+  ⚠️ MDX Docs 탭의 시각 확인(렌더·갤러리·다크모드)은 **사용자 몫**.
 
 ---
 
@@ -894,6 +1102,26 @@ Storybook autodocs 를 활성화하고 MDX 문서 페이지를 작성한다.
 
 **핵심 포인트**
 - CI: 코드 푸시 때마다 자동으로 빌드+테스트. 깨진 코드 병합 방지.
+
+**진행 기록 (2026-05-22, STEP 5-1·5-2 배치 완료)**
+- `.github/workflows/ci.yml` 신규. 7단계: checkout → pnpm setup → node(캐시) →
+  install → build → test → build-storybook.
+- ⚠️ **pnpm 을 Node 보다 먼저**: `pnpm/action-setup@v4` 가 `actions/setup-node@v4`
+  앞에 있어야 `cache: pnpm` 이 동작한다. 순서가 바뀌면 "Caching for 'pnpm' failed".
+- ⚠️ **vitest watch 모드 함정**: `package.json` 의 `"test": "vitest"` 는 watch 모드.
+  CI 에서는 `pnpm --filter @my-ds/ui exec vitest run` 으로 1회 실행을 명시한다.
+  (`CI` 환경변수로 Vitest 가 자동 감지하기도 하나 명시가 더 안전.)
+- ⚠️ **위상 순서**: `pnpm -r build` 는 워크스페이스 의존 그래프 위상 순서로
+  실행하므로 `tokens → ui` 가 자동 보장된다. `tokens` 를 먼저 명시할 필요 없음.
+- ⚠️ **--frozen-lockfile**: CI 표준. `pnpm-lock.yaml` 이 최신 상태로 커밋돼 있어야
+  통과한다(현재 git status M pnpm-lock.yaml — push 전 커밋 필요).
+- build-storybook 단계 추가(D4 결정): MDX 문법 오류를 CI 에서도 잡는다.
+  명세 외 추가지만 구현량이 한 줄(`pnpm --filter @my-ds/ui run build-storybook`)이라
+  사용자가 채택함.
+- `pnpm/action-setup@v4` 는 `version` 생략 시 루트 `package.json` 의
+  `"packageManager": "pnpm@10.33.4"` 를 읽는다 — 단일 진실 원천 유지.
+- 검증: 로컬에서 `pnpm install --frozen-lockfile` / `pnpm -r build` /
+  `vitest run` 17/17 모두 통과. CI 초록불은 push 후 GitHub Actions 탭에서 확인.
 
 ---
 

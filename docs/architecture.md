@@ -2,7 +2,10 @@
 
 > 이 문서는 프로젝트의 **헌법**이다. 무엇을, 왜, 어떤 구조로 만드는지의 기준.
 > 구현 중 판단이 흔들릴 때 이 문서로 돌아온다.
-> 최종 갱신: 2026-05-22 — STEP 2-4: Storybook 은 Vite 기반이라 Tailwind 처리를
+> 최종 갱신: 2026-05-22 — Phase 3(STEP 3-1~3-6) 완료 반영(코드 분석 기반 동기화):
+>   §6 [4] 예시를 `text-white` → `text-background` 로 정정(실제 Button 코드와 일치).
+>   §7 에 headless `useButton`·`ToggleButton`(STEP 3-3) 추가 명시.
+> 2026-05-22 — STEP 2-4: Storybook 은 Vite 기반이라 Tailwind 처리를
 >   @tailwindcss/vite(viteFinal)로 한다. §6 에 Storybook 처리 경로 추가.
 > 2026-05-22 — STEP 2-2: CSS 빌드를 @tailwindcss/cli 별도 단계로 전환
 >   (@tailwindcss/vite 플러그인이 tsdown/Rolldown 과 비호환). @theme → @theme inline.
@@ -164,8 +167,10 @@ storybook / tests / 사용처 앱
 
            ↓ 컴포넌트가 클래스 사용
 
-[4] <button className="bg-primary text-white hover:bg-primary/90">
-    ← 색을 직접 안 적음. 다크모드 때도 코드 변경 없음.
+[4] <button className="bg-primary text-background hover:bg-primary/90">
+    ← 색을 직접 안 적음(토큰 유틸리티만 사용). 다크모드 때도 코드 변경 없음.
+    ※ solid 버튼 글자색은 text-background — 배경색 토큰이 light/dark 로 자동
+      반전돼 두 테마 모두 대비가 확보된다(실제 Button 구현 · docs/edgecase/phase-3.md).
 ```
 
 **다크모드**: `<html data-theme="dark">` 속성만 토글하면 [1]의 CSS 변수가 교체되고,
@@ -232,6 +237,11 @@ Tailwind 클래스는 그대로인데 색만 바뀐다. 컴포넌트 코드 수�
 - **Select**, **Grid**, **List** 등.
 
 > MVP는 1순위 + 2순위까지를 목표로 한다. 3순위는 여유 시.
+
+> 💡 STEP 3-3 에서 Button 의 headless 동작 훅 `useButton` 과 그 응용 컴포넌트
+> `ToggleButton`(눌림 상태 토글)이 추가됐다 — §2 원칙 4(기능과 스타일 분리)의
+> 실증이다. 둘 다 패키지 공개 API 로 export 된다(`useButton` 으로 소비자가 자기만의
+> 버튼을 만들 때 클릭 차단·로딩 동작을 그대로 재사용).
 
 ---
 

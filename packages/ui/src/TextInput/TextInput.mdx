@@ -1,0 +1,77 @@
+import { Meta, Canvas, Controls, ArgTypes } from "@storybook/addon-docs/blocks";
+import * as TextInputStories from "./TextInput.stories";
+
+<Meta of={TextInputStories} />
+
+# TextInput
+
+폼에서 텍스트를 입력받는 기본 컴포넌트. `label`·`helperText`·`error`를 한 덩어리로
+제공하고, 접근성(`aria-invalid`, `aria-describedby`)을 기본 탑재한다.
+
+**Controlled 방식 권장**: `value`와 `onChange`를 React state로 연결하면 입력값을
+완전히 제어할 수 있어 폼 검증·초기화가 쉽다. `defaultValue`만 넘기는 비제어 방식도
+동작한다.
+
+---
+
+## 기본 사용법
+
+<Canvas of={TextInputStories.Playground} />
+<Controls of={TextInputStories.Playground} />
+
+---
+
+## 상태 갤러리
+
+### 기본
+
+`label`과 `helperText`가 있는 가장 단순한 형태.
+
+<Canvas of={TextInputStories.Default} />
+
+### 에러
+
+`error` prop을 넘기면 빨간 테두리(`cva invalid variant`)가 켜지고,
+`aria-invalid="true"` + `aria-describedby`(에러 메시지 id)가 자동으로 붙는다.
+
+<Canvas of={TextInputStories.WithError} />
+
+### 비활성
+
+`disabled`이면 전체가 흐려지고 입력이 막힌다.
+
+<Canvas of={TextInputStories.Disabled} />
+
+---
+
+## Addon 갤러리
+
+입력창 좌·우에 아이콘, 텍스트, 버튼을 넣을 수 있다. `Flex(align="stretch")`
+레이아웃이 addon과 input을 나란히 배치한다.
+
+### 왼쪽 Addon — 검색 아이콘
+
+<Canvas of={TextInputStories.WithLeftAddon} />
+
+### 오른쪽 Addon — 비밀번호 표시 토글
+
+<Canvas of={TextInputStories.WithRightAddon} />
+
+### 양쪽 Addon — URL 접두·접미
+
+<Canvas of={TextInputStories.WithBothAddons} />
+
+---
+
+## 접근성 포인트
+
+- `useId`로 생성한 고유 id가 `label[htmlFor]` ↔ `input[id]`를 연결한다.
+- `error` 있을 때: `aria-invalid="true"` + `aria-describedby`(에러 메시지 id) 자동 부여.
+- `helperText`도 `aria-describedby`로 연결된다(에러와 헬퍼가 동시에 있으면 에러가 우선).
+- 포커스 링은 래퍼가 `focus-within:`으로 그린다 — addon 유무와 무관하게 동일한 포커스 시각.
+
+---
+
+## Props
+
+<ArgTypes of={TextInputStories} />

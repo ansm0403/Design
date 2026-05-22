@@ -1,0 +1,70 @@
+import { Meta, Canvas, Controls, ArgTypes } from "@storybook/addon-docs/blocks";
+import * as ButtonStories from "./Button.stories";
+
+{/* <Meta of={...}> — 이 MDX 파일을 Button 의 Docs 탭으로 연결한다.
+    이 MDX 가 Docs 탭을 제공하므로 Button.stories.tsx 에서 tags:["autodocs"] 를
+    제거했다 — 둘 다 두면 Docs 페이지가 중복 생성돼 인덱싱 에러가 난다. */}
+<Meta of={ButtonStories} />
+
+# Button
+
+`variant`, `color`, `size` 세 축의 조합으로 시각 변형을 표현하는 기본 컴포넌트.
+[class-variance-authority(cva)](https://cva.style)로 27개 조합 클래스를 관리하고,
+`useButton` headless 훅으로 로딩·비활성 동작을 분리했다.
+
+---
+
+## 기본 사용법
+
+Controls 패널에서 `variant`, `color`, `size`, `isLoading`, `disabled`를 직접 바꿔볼 수 있다.
+
+<Canvas of={ButtonStories.Playground} />
+<Controls of={ButtonStories.Playground} />
+
+---
+
+## Variant 갤러리
+
+`solid` / `outline` / `ghost` × `primary` / `danger` / `neutral` × `sm` / `md` / `lg` 의
+27가지 조합을 한눈에 볼 수 있다.
+
+> **설계 포인트** — `solid` 의 글자색은 `text-white`가 아니라 `text-background`(토큰).
+> `data-theme="dark"` 전환 시 배경 토큰이 반전돼 두 테마 모두 대비를 유지한다.
+
+<Canvas of={ButtonStories.AllCombinations} />
+
+---
+
+## 상태
+
+### 로딩
+
+`isLoading={true}` 이면 스피너가 버튼 위에 겹쳐 뜨고(`opacity-0`으로 감춘 텍스트가
+자리를 차지해 버튼 너비가 유지됨), 클릭이 차단되며 `aria-busy="true"`가 붙는다.
+
+<Canvas of={ButtonStories.Loading} />
+
+### 비활성
+
+`disabled`(네이티브) vs `aria-disabled`(부드러운 비활성)를 비교할 수 있다.
+Tab 키로 두 버튼을 순회해 보면 차이가 보인다 — 네이티브 `disabled`는 포커스를 아예
+건너뛰고, `aria-disabled`는 포커스는 받되 클릭·Enter를 막는다.
+
+<Canvas of={ButtonStories.Disabled} />
+<Canvas of={ButtonStories.DisabledVariants} />
+
+---
+
+## ToggleButton (headless 응용)
+
+`Button`과 동일한 `useButton` 훅 + `buttonStyles` 표를 재사용해 눌림 상태(토글)를
+추가한 컴포넌트. 눌림 = solid, 안눌림 = outline으로 자동 전환되며 `aria-pressed`가
+붙는다.
+
+<Canvas of={ButtonStories.Toggle} />
+
+---
+
+## Props
+
+<ArgTypes of={ButtonStories} />

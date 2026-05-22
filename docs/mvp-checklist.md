@@ -2,7 +2,8 @@
 
 > 작업할 때마다 완료된 항목을 체크한다.
 > MVP 목표 = Phase 0~4 (1·2순위 컴포넌트) + Phase 5의 CI까지.
-> 최종 갱신: 2026-05-22 — Phase 3 STEP 3-1 완료 (Button — variant/color/size, cva).
+> 최종 갱신: 2026-05-22 — Phase 4 STEP 4-2·4-3 배치 완료 (Button·TextInput 단위 테스트 +
+>   Button·TextInput·Toast axe 접근성 테스트, 17/17 통과). 선행: library.css @source not 보강.
 
 ---
 
@@ -46,32 +47,32 @@
 ## Phase 3 — 핵심 컴포넌트
 - [x] cva(class-variance-authority) 설치
 - [x] Button (1) — variant/color/size (cva 활용)
-- [ ] Button (2) — loading/disabled/a11y (aria-busy, focus-visible)
-- [ ] Button — headless(useButton) 분리 + ToggleButton *(선택, 시간 되면)*
-- [ ] TextInput (1) — Controlled, label/error/helper, 접근성
-- [ ] TextInput (2) — left/right Addons
-- [ ] Toast — Provider + useToast + UI + aria-live
-- [ ] 각 컴포넌트 Storybook 스토리
-- [ ] 검증: 전 컴포넌트 동작 + 다크모드
+- [x] Button (2) — loading/disabled/a11y (isLoading 스피너, aria-busy, focus-visible ring, aria-disabled)
+- [x] Button — headless(useButton) 분리 + ToggleButton *(선택 항목이었으나 완료됨)*
+- [x] TextInput (1) — Controlled, label/error/helper, 접근성 (useId, aria-invalid/describedby)
+- [x] TextInput (2) — left/right Addons (Flex 기반)
+- [x] Toast — Provider + useToast + UI + aria-live (자동소멸 타이머, info=primary 재사용)
+- [x] 각 컴포넌트 Storybook 스토리 (Button/TextInput/Toast + ToggleButton)
+- [x] 검증: 전 컴포넌트 동작 + 다크모드 *(tsc·build 통과 / Storybook·다크모드 토글 사용자 시각 확인 완료)*
 
 ## Phase 4 — 테스트
-- [ ] Vitest + Testing Library + vitest-axe 세팅 (jsdom 환경, happy-dom 금지)
-- [ ] vitest.setup.ts: @testing-library/jest-dom + vitest-axe/extend-expect
-- [ ] Button 단위 테스트
-- [ ] TextInput 단위 테스트
-- [ ] 접근성 테스트 (vitest-axe, 주요 컴포넌트)
-- [ ] 검증: `pnpm --filter @my-ds/ui test` 전체 통과
+- [x] Vitest 3.2.4 + Testing Library + vitest-axe 세팅 (jsdom 환경, happy-dom 금지)
+- [x] vitest.setup.ts: @testing-library/jest-dom/vitest + vitest-axe 매처 수동 등록 *(extend-expect 결함 우회 — phase-4.md)*
+- [x] Button 단위 테스트
+- [x] TextInput 단위 테스트
+- [x] 접근성 테스트 (vitest-axe, 주요 컴포넌트)
+- [x] 검증: `pnpm --filter @my-ds/ui test` 전체 통과 *(vitest run 17/17)*
 
 ## Phase 5 — 문서화 & CI/CD
-- [ ] Storybook autodocs/MDX 문서 (Button/TextInput/Toast)
-- [ ] GitHub Actions ci.yml (Node 20, install→build→test)
+- [x] Storybook autodocs/MDX 문서 (Button/TextInput/Toast)
+- [x] GitHub Actions ci.yml (Node 20, install→build→test→build-storybook)
 - [ ] (선택) 배포 준비 (publishConfig, files, dry-run)
-- [ ] 검증: CI 초록불
+- [ ] 검증: CI 초록불 *(push 후 사용자 확인 대기)*
 
 ---
 
 ## MVP 이후 (선택 / 백로그)
-- [ ] Button headless(useButton) 분리 — Phase 3에서 건너뛴 경우
+- [x] ~~Button headless(useButton) 분리~~ — 건너뛰지 않고 Phase 3 STEP 3-3 에서 완료
 - [ ] Accordion (ARIA 심화)
 - [ ] Select Input
 - [ ] Grid
@@ -111,3 +112,16 @@
 - 2026-05-22 | Phase 3 STEP 3-1 완료 (Button — variant/color/size, cva 설치·compoundVariants 9조합, 순수 button+forwardRef, Playground/AllCombinations 스토리, tsc·build·styles.css 검증) | solid 글자색을 문서 예시 text-white 대신 text-background 로 — 규칙3 위반·다크 대비 회피 (docs/edgecase/phase-3.md) | STEP 3-2 (loading/접근성) 예정
 - 2026-05-22 | STEP 3-1 edgecase-review 수행 (FAIL 0, WARN 1) | text-white→text-background 결정 근거 docs/edgecase/phase-3.md 기록, architecture.md §6 예시 스니펫 정정은 사용자 판단 위임 | STEP 3-2 예정
 - 2026-05-22 | STEP 3-1 edgecase-review 재실행 (사용자 요청, FAIL 0, WARN +1) | dist/styles.css 전수 검사 — cva `"outline"` 식별자가 Tailwind 스캐너에 잡혀 dead `.outline` 누출(수용) / 선재 누출 발견: cn.ts 주석의 따옴표 예시 → `.bg-blue-500`·`.bg-red-500` 배포 CSS 누출(Phase 2 파일, 후속 수정 권장). docs/edgecase/phase-3.md 갱신 | STEP 3-2 예정
+- 2026-05-22 | Phase 3 STEP 3-2·3-3 완료 (git worktree `phase3/button`, 커밋 7530972 — Button 로딩/접근성 + headless useButton + ToggleButton) | worktree 작업이라 per-step 설계·진행 로그가 없었음 → 본 세션에서 코드 분석으로 phases.md 진행기록 역작성 | STEP 3-4 계속
+- 2026-05-22 | Phase 3 STEP 3-4·3-5 완료 (git worktree `phase3/textinput`, 커밋 82fd8bd — TextInput Controlled + label/error/helper + 좌우 Addon) | TextInput 이 처음부터 addon 포함해 작성 → 3-4·3-5 가 한 커밋 | STEP 3-6 계속
+- 2026-05-22 | Phase 3 STEP 3-6 완료 (git worktree `phase3/toast`, 커밋 f39eb33 — ToastProvider/useToast/Toast, aria-live, 자동소멸 타이머) | 계획과 달리 info 전용 토큰 미추가 → primary 토큰 재사용(tokens 무변경) | Phase 3 종료
+- 2026-05-22 | STEP 3-1~3-6 문서 동기화 (코드 분석 기반: phases.md 진행기록 5건 역작성, mvp-checklist 항목 갱신, architecture.md §6 예시 text-white→text-background 정정) | tsc·build 검증 통과 / 다크모드 시각 확인은 사용자 대기 / edgecase-review 는 3-2~3-6 미수행 | Phase 4 (테스트) 예정
+- 2026-05-22 | Phase 3 다크모드·Storybook 동작 사용자 시각 확인 완료 (검증 항목 체크) | — | —
+- 2026-05-22 | STEP 3-2~3-6 edgecase-review 수행 (FAIL 1, WARN 1) | 로딩 버튼이 `invisible`(visibility:hidden) 탓에 accessible name 소실 → STEP 4-3 axe `button-name` 위반 예상(FAIL, Button.tsx) / disabled TextInput 이 addon 내부 인터랙티브 요소를 비활성화 못 함(WARN). docs/edgecase/phase-3.md 기록 | FAIL 수정(`invisible`→`opacity-0`) 적용 여부 사용자 확인 대기
+- 2026-05-22 | STEP 3-2 FAIL 수정 완료 (Button.tsx `invisible`→`opacity-0`, 사용자 승인) — 로딩 중 버튼 accessible name 보존. tsc·build 재검증 통과 | WARN(disabled TextInput addon)은 문서화로 종결 | Phase 4 (테스트) 예정
+- 2026-05-22 | Phase 4 STEP 4-1 완료 (Vitest 3.2.4 + RTL + vitest-axe + jsdom 세팅 — vitest.config.ts·vitest.setup.ts 신규, tsconfig types/include, test 스크립트, 임시 스모크 테스트로 4/4 검증 후 삭제) | vitest-axe 0.1.0 의 extend-expect 결함(빈 js + obsolete 타입) → dist/matchers.js deep import + 수동 expect.extend 로 우회 / Vitest 는 CLAUDE.md 핀대로 3.x 유지(최신 4.1.7 안 씀) | STEP 4-2·4-3 배치 예정
+- 2026-05-22 | STEP 4-1 edgecase-review 수행 (FAIL 0, WARN 3) | vitest-axe 0.1.0 결함 우회 / jsdom canvas 미구현 → axe color-contrast 검사 불가(phase-3 의 4-3 재확인 계획에 영향) / library.css 가 *.test.tsx 도 스캔 → STEP 4-2 테스트 클래스 누출 위험 → docs/edgecase/phase-4.md 기록 | STEP 4-2 진입 시 library.css @source not 보강 후 4-2·4-3 배치
+- 2026-05-22 | 선행+STEP 4-2·4-3 배치 완료 (library.css @source not 보강 [WARN 3 해결] + Button·TextInput 단위 5건씩 + Button·TextInput·Toast axe 접근성 — 17/17 통과, tsc·build 클린) | region best-practice 규칙 → <main> 래퍼로 해결(규칙 disable 불필요) / vitest-axe axe 는 루트 진입점 정상(deep import 불필요) / canvas stderr 경고는 무해(color-contrast skip 수용) | Phase 4 완료 → Phase 5 예정
+- 2026-05-22 | STEP 4-2·4-3 edgecase-review 수행 (FAIL 0, WARN 0) | 신규 엣지케이스 없음 — phase-4.md 미수정 | —
+- 2026-05-22 | Phase 5 STEP 5-1·5-2 배치 완료 (Button/TextInput/Toast MDX 문서 + .github/workflows/ci.yml, tsc·build·vitest 17/17 클린) | edgecase-review WARN 1 — Toast.mdx 미사용 Controls import → 즉시 수정, docs/edgecase/phase-5.md 신규 작성 | CI 초록불은 push 후 사용자 확인 / STEP 5-3 진행 여부 협의
+- 2026-05-22 | STEP 5-1 사용자 검증 중 Storybook 빌드 실패 발견·수정 (커스텀 MDX + tags:["autodocs"] 공존 → SB10 인덱싱 충돌) | 세 CSF 에서 tags:["autodocs"] 제거 → build-storybook 성공 재확인, phase-5.md FAIL 기록 | MDX Docs 탭 시각 확인 사용자 대기
