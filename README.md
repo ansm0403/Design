@@ -3,14 +3,13 @@
 > 디자인 토큰과 재사용 가능한 React UI 컴포넌트 라이브러리를 하나로 묶은 **디자인 시스템 모노레포**.
 > 학습용으로 시작했지만, 코드 품질만큼은 현업(production) 기준을 목표로 했습니다.
 
-![pnpm](https://img.shields.io/badge/pnpm-10-F69220?logo=pnpm&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
-![Storybook](https://img.shields.io/badge/Storybook-10-FF4785?logo=storybook&logoColor=white)
-![Vitest](https://img.shields.io/badge/Vitest-3-6E9F18?logo=vitest&logoColor=white)
+![PNPM](https://img.shields.io/badge/pnpm-%234a4a4a.svg?style=for-the-badge&logo=pnpm&logoColor=f69220)
+![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)<br>
+![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Storybook](https://img.shields.io/badge/-Storybook-FF4785?style=for-the-badge&logo=storybook&logoColor=white)
+![Vitest](https://img.shields.io/badge/-Vitest-252529?style=for-the-badge&logo=vitest&logoColor=FCC72B)
 
-<!-- CI 배지 추가 시: ![CI](https://github.com/<owner>/my-design-system/actions/workflows/ci.yml/badge.svg) -->
 
 ---
 
@@ -51,7 +50,7 @@
 
 ## 2. 라이브 데모
 
-🔗 **Storybook 라이브 데모**: _Vercel 배포 후 URL을 여기에 추가_
+🔗 **Storybook 라이브 데모**: _design-ui-five.vercel.app_
 
 배포된 Storybook에서 12종의 컴포넌트를 직접 조작해 볼 수 있습니다. 우측 Controls
 패널로 props를 실시간으로 바꾸고, 상단 툴바의 테마 토글로 라이트/다크 모드를
@@ -64,24 +63,14 @@
 
 ## 3. 프로젝트 목적과 계기
 
-React로 애플리케이션을 만드는 일에는 익숙했지만, 늘 한 가지가 궁금했습니다.
-**"내가 매일 `import` 해서 쓰는 컴포넌트 라이브러리는, 대체 누가 어떻게 만든 걸까?"**
+React로 앱을 만들면서 컴포넌트 라이브러리를 참 많이 써왔는데, 어느 순간 이런 생각이 들었습니다.
+**"이걸 만드는 쪽은 어떤 고민을 할까?"**
 
-기능을 개발하는 일은 라이브러리를 **소비**하는 일이고, 디자인 시스템을 만드는 일은
-라이브러리를 **저작**하는 일입니다. 이 프로젝트는 그 시선을 소비자에서 저작자로
-옮겨보려는 시도였습니다.
+처음엔 그냥 컴포넌트 몇 개 모아두면 되는 거 아닌가 싶었는데, 막상 시작하니까 생각보다 따져야 할 게 많았습니다. 패키지를 어떻게 나눌지, 빌드 산출물에 뭘 포함하고 뭘 빼야 할지, React를 어떻게 다뤄야 소비자 앱에서 문제가 안 생기는지 — 하나씩 만나면서 "아, 그냥 앱 만드는 거랑 다르구나"를 계속 느꼈습니다.
 
-디자인 시스템을 학습 주제로 고른 이유는, 프런트엔드의 여러 고급 주제가 한곳에서
-만나는 지점이기 때문입니다 — 모노레포 아키텍처, 번들러와 빌드 파이프라인,
-디자인 토큰과 테마, 접근성, 컴포넌트 API 설계, 라이브러리 배포, 문서화. 화면 하나를
-만드는 학습이 "도구를 **쓰는** 법"을 가르친다면, 디자인 시스템은 "도구를 **만드는**
-법"과 "제약을 **설계하는** 법"을 가르칩니다.
+디자인 시스템을 고른 건 이런저런 주제가 한꺼번에 얽혀 있어서였습니다 — 모노레포, 번들러, 토큰, 접근성, API 설계. 뭔가 하나 파다 보면 자연스럽게 다른 것도 이해하게 되는 구조가 마음에 들었습니다.
 
-그래서 목표를 단순히 "컴포넌트 몇 개 만들기"로 두지 않았습니다. 진짜 목표는
-**production 수준의 의사결정을 직접 내려보는 것**이었습니다. 모든 색은 토큰으로만,
-의존성은 단방향으로, 접근성은 기본값으로 — 이런 제약을 스스로 세우고 끝까지 지키는
-경험. 학습용으로 시작했지만, 그 과정에서 내리는 판단과 코드 품질만큼은 현업 기준을
-타협하지 않으려 했습니다.
+학습용이니까 완성도보다 경험을 우선하자는 생각도 있었는데, 반대로 코드 품질만큼은 단순 연습용에서 벗어나도록 최대한 노력하였습니다.
 
 ---
 
