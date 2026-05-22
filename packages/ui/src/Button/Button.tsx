@@ -3,6 +3,7 @@ import type { ComponentPropsWithoutRef, ForwardedRef } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../utils/cn";
 import { useButton } from "./useButton";
+import { Spinner } from "../Spinner";
 
 // ── cva (class-variance-authority) 란? ───────────────────────────────
 // variant(시각 변형)별 className 을 if/삼항 분기 없이 "표" 로 선언하는 도구다.
@@ -123,35 +124,6 @@ export type ButtonProps = ButtonVariantProps &
     isLoading?: boolean;
   };
 
-// 로딩 스피너 — 순수 장식이라 aria-hidden 으로 보조기술에서 숨긴다.
-// 로딩 상태는 버튼의 aria-busy 가 이미 음성으로 전달하므로 스피너를 또 읽을
-// 필요가 없다. stroke/fill 에 currentColor 를 써서 버튼 글자색(토큰)을 그대로
-// 따라가므로, 별도 색 지정 없이 모든 variant 에서 자연스럽게 보인다.
-function Spinner() {
-  return (
-    <svg
-      className="h-4 w-4 animate-spin"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"
-      />
-    </svg>
-  );
-}
-
 // Button 은 polymorphic 이 아니라 항상 <button> 으로 렌더된다 → Box 처럼
 // 제네릭 타입을 보존하는 캐스팅이 필요 없다. 구현부 타입도 그대로 ButtonProps.
 function ButtonInner(
@@ -204,7 +176,10 @@ function ButtonInner(
       {loading && (
         // 스피너는 absolute 로 버튼 위에 겹쳐 띄운다 (베이스의 relative 가 기준점).
         <span className="absolute inset-0 flex items-center justify-center">
-          <Spinner />
+          <Spinner
+            aria-hidden
+            size={size === "sm" ? "sm" : size === "lg" ? "lg" : "md"}
+          />
         </span>
       )}
       {/* 로딩 중 children 은 opacity-0 으로 "시각적으로만" 숨긴다.

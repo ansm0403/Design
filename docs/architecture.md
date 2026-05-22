@@ -2,7 +2,13 @@
 
 > 이 문서는 프로젝트의 **헌법**이다. 무엇을, 왜, 어떤 구조로 만드는지의 기준.
 > 구현 중 판단이 흔들릴 때 이 문서로 돌아온다.
-> 최종 갱신: 2026-05-22 — Phase 3(STEP 3-1~3-6) 완료 반영(코드 분석 기반 동기화):
+> 최종 갱신: 2026-05-22 — Phase 7(배포 & README) 신설: Storybook 정적 빌드를
+>   Vercel 에 호스팅하기로 결정. §9 "배포(Vercel)" 신설, §8 로드맵 Phase 7 행 +
+>   §4 폴더 구조에 README.md·vercel.json 추가. phases.md 는 미수정(사용자 결정).
+> 2026-05-22 — Phase 6(보조 컴포넌트 5종) 신설: §7 에 "Phase 6 추가"
+>   컴포넌트 목록(Spinner/Badge/Divider/Card/Grid), §8 로드맵에 Phase 6 행 추가.
+>   MVP 범위 확장 — 사용자 승인(Immutable Rule 8). Grid 는 3순위→Phase 6 승격.
+> 2026-05-22 — Phase 3(STEP 3-1~3-6) 완료 반영(코드 분석 기반 동기화):
 >   §6 [4] 예시를 `text-white` → `text-background` 로 정정(실제 Button 코드와 일치).
 >   §7 에 headless `useButton`·`ToggleButton`(STEP 3-3) 추가 명시.
 > 2026-05-22 — STEP 2-4: Storybook 은 Vite 기반이라 Tailwind 처리를
@@ -72,6 +78,8 @@ my-design-system/
 ├─ pnpm-workspace.yaml       # 워크스페이스 선언
 ├─ tsconfig.base.json        # 공통 TS 설정 (각 패키지가 extends)
 ├─ .gitignore
+├─ README.md                 # Phase 7: 프로젝트 소개 문서
+├─ vercel.json               # Phase 7: Vercel 배포 설정 (빌드 커맨드·출력 경로)
 ├─ .github/
 │  └─ workflows/
 │     └─ ci.yml              # Phase 5: CI 파이프라인
@@ -234,9 +242,29 @@ Tailwind 클래스는 그대로인데 색만 바뀐다. 컴포넌트 코드 수�
 
 ### 3순위 — 선택 (시간 되면)
 - **Accordion** — 접근성(ARIA) 심화.
-- **Select**, **Grid**, **List** 등.
+- **Select**, **List** 등.
 
 > MVP는 1순위 + 2순위까지를 목표로 한다. 3순위는 여유 시.
+
+### Phase 6 추가 — 보조 컴포넌트 (2026-05-22, 사용자 승인 확장)
+
+MVP(Phase 0~5) 완료 후, 자주 쓰이되 구현 난도가 낮은 보조 컴포넌트 5종을
+사용자 승인 하에 추가한다 (Immutable Rule 8 — MVP 범위 확장은 사용자 승인 필요).
+새 개념 학습보다 **기존 패턴 재사용으로 컴포넌트 커버리지 확대**가 목적이다.
+
+- **Spinner** — 로딩 인디케이터. Button 의 인라인 SVG 스피너를 추출·공용화.
+  (재사용: 추출 리팩터링 / `role="status"`)
+- **Badge** — 상태·카운트 라벨. (재사용: Button STEP 3-1 의 cva `compoundVariants`)
+- **Divider** — 구분선. (신규지만 거의 트리비얼 / `role="separator"`)
+- **Card** — surface 컨테이너. `surface`·`shadow`·`radius`·`border` 토큰의 첫
+  실제 소비자. **단순 컨테이너로 확정** — `Card.Header/Body/Footer` 같은
+  compound component 패턴은 채택하지 않는다(사용자 결정).
+- **Grid** — 2차원 격자 레이아웃. Flex(1차원)의 짝. **고정 컬럼만** 지원하고,
+  반응형(브레이크포인트별 컬럼)은 후속 확장 여지로 남긴다(사용자 결정).
+
+> Grid 는 원래 3순위였으나 Phase 6 으로 승격됐다. Accordion/Select/List 는
+> 백로그로 유지 — 특히 Select 는 팝업 위치 계산(floating-ui 등) 의존성 검토가
+> 선행돼야 하는 최난도 컴포넌트라 MVP 확장 범위에 넣지 않았다.
 
 > 💡 STEP 3-3 에서 Button 의 headless 동작 훅 `useButton` 과 그 응용 컴포넌트
 > `ToggleButton`(눌림 상태 토글)이 추가됐다 — §2 원칙 4(기능과 스타일 분리)의
@@ -255,12 +283,46 @@ Tailwind 클래스는 그대로인데 색만 바뀐다. 컴포넌트 코드 수�
 | **3** | 핵심 컴포넌트 (Button, TextInput, Toast) | 6 |
 | **4** | 테스트 (단위·접근성) | 3 |
 | **5** | 문서화 & CI/CD | 3 |
+| **6** | 보조 컴포넌트 (Spinner·Badge·Divider·Card·Grid) — MVP 확장 | 6 |
+| **7** | 배포 & README (Vercel Storybook 호스팅, 루트 README) | — |
 
 상세 STEP은 `phases.md` 참조. 진행 추적은 `mvp-checklist.md` 참조.
 
+> Phase 7 은 배포·문서 작업이라 `phases.md` 상세 STEP 없이 `mvp-checklist.md` 로만
+> 추적한다(사용자 결정). 자세한 배포 결정은 §9 참조.
+
 ---
 
-## 9. 이 문서의 갱신 규칙
+## 9. 배포 (Vercel)
+
+Phase 7 에서 추가된 결정 (2026-05-22, 사용자 승인). 라이브러리 패키지(`tokens`·`ui`)는
+npm 배포 대상이지 호스팅 대상이 아니다 — 실제 npm publish 는 MVP 백로그로 유지된다.
+**호스팅 대상은 Storybook 정적 빌드**다. 디자인 시스템에서 Storybook 이 곧 공개
+쇼케이스이자 문서 사이트 역할을 하므로, 이를 Vercel 에 올려 공개 URL 을 만든다.
+
+**배포 대상**
+- `pnpm --filter @my-ds/ui build-storybook` 의 산출물 `packages/ui/storybook-static/`.
+
+**모노레포 빌드 체인**
+- Vercel 빌드는 루트에서: 의존성 설치 → `tokens` 빌드 → `ui` 빌드 → Storybook 빌드.
+  `ui` 가 `tokens` 의 `dist` 를 소비하므로 순서가 중요하다 (§5 의존성 흐름).
+- 이 빌드 커맨드와 출력 디렉터리는 **루트 `vercel.json`** 으로 코드화한다
+  (config-as-code) — 대시보드 수동 설정에 의존하지 않아 재현 가능하다.
+
+**CI(GitHub Actions)와의 관계**
+- `ci.yml` 의 `build-storybook` 단계는 그대로 **빌드 검증용**이다 (MDX 컴파일 오류 등).
+- 실제 배포는 Vercel 의 Git 연동이 독립적으로 수행한다 — CI 와 배포는 분리된 경로다.
+
+**확인 필요 (구현 시 확정)**
+- Node 버전: `tokens` 의 tsdown 0.21.x 핀은 Node 20 환경 기준이다 (0.22+ 는 Node 22+
+  요구). Vercel 의 Node 버전이 `engines.node: ">=20"` 안에서 무엇으로 잡히는지,
+  CI(Node 20)와 어긋나지 않는지 구현 단계에서 확인한다.
+
+루트 `README.md` 작성도 Phase 7 에 포함된다 (추적은 `mvp-checklist.md` Phase 7).
+
+---
+
+## 10. 이 문서의 갱신 규칙
 
 - 설계 결정이 바뀌면 **반드시 이 문서를 먼저 수정**하고 코드를 고친다.
 - "왜 이렇게 했는지"를 항상 기록한다 (미래의 나/팀원을 위해).

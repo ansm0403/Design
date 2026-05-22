@@ -2,8 +2,11 @@
 
 > 작업할 때마다 완료된 항목을 체크한다.
 > MVP 목표 = Phase 0~4 (1·2순위 컴포넌트) + Phase 5의 CI까지.
-> 최종 갱신: 2026-05-22 — Phase 4 STEP 4-2·4-3 배치 완료 (Button·TextInput 단위 테스트 +
->   Button·TextInput·Toast axe 접근성 테스트, 17/17 통과). 선행: library.css @source not 보강.
+> 최종 갱신: 2026-05-22 — Phase 7 진행 중: vercel.json 작성 + edgecase-review
+>   (FAIL 0, WARN 1 — phase-7.md) + 루트 README.md 작성(포트폴리오용 12항목) 완료.
+>   남은 항목: Vercel 프로젝트 연결·배포 검증. architecture.md §9 배포 결정 참조.
+>   (이전: Phase 6 STEP 6-1~6-6 배치 완료 — Spinner/Badge/Divider/Card/Grid 구현·
+>   테스트·스토리·export. edgecase-review WARN 1건(Badge subtle 대비율) — phase-6.md.)
 
 ---
 
@@ -69,13 +72,35 @@
 - [ ] (선택) 배포 준비 (publishConfig, files, dry-run)
 - [ ] 검증: CI 초록불 *(push 후 사용자 확인 대기)*
 
+## Phase 6 — 보조 컴포넌트 (MVP 확장 / 2026-05-22 사용자 승인)
+- [x] 선행 — theme.css @theme inline 에 radius·shadow 토큰 매핑 추가 *(N/A — cascade 로 자동 적용 확인, 추가 매핑 불필요)*
+- [x] Spinner — Button 인라인 SVG 추출 + Button 리팩터링, role="status"/aria-hidden 2경로
+- [x] Badge — variant(solid/subtle/outline)×color(primary/danger/success/neutral)×size, cva
+- [x] Divider — orientation(h/v), role="separator"+aria-orientation, decorative 경로
+- [x] Card — 단순 컨테이너, variant(outlined/elevated/filled)+padding, surface/shadow/radius 토큰 첫 소비
+- [x] Grid — 고정 cols(1~6)+gap, Box 기반 정적 클래스 매핑 (반응형은 후속 확장)
+- [x] 각 컴포넌트 Storybook 스토리
+- [x] 접근성 테스트 (vitest-axe) — 신규 5종 (62/62 전체 통과)
+- [x] src/index.ts 에 5종 export
+- [ ] (선택) MDX 문서
+- [ ] 검증: build 클린 ✅ + vitest run 전체 통과 ✅ + Storybook 렌더·다크모드 *(사용자 확인 대기)*
+
+## Phase 7 — 배포 & README (MVP 확장 / 2026-05-22 사용자 승인)
+> Storybook 정적 빌드를 Vercel 에 호스팅한다. 상세 배포 결정은 architecture.md §9 참조.
+> phases.md 상세 STEP 없이 이 체크리스트로만 추적한다(사용자 결정).
+- [x] vercel.json 작성 — 빌드 커맨드(tokens→ui→storybook 체인) + outputDirectory(packages/ui/storybook-static) *(로컬 빌드 체인 검증 완료)*
+- [ ] Vercel 프로젝트 연결 + 빌드 환경 설정 (Node 버전 확인, pnpm 자동 감지)
+- [ ] Storybook 정적 배포 검증 — 배포 URL 에서 컴포넌트 렌더·다크모드 토글 동작
+- [x] README.md 작성 — 포트폴리오용 12개 항목(사용자 지정) + 목차·기술 배지 *(라이브 데모 URL 은 배포 후 입력)*
+- [ ] 검증: 배포 URL 정상 동작 *(사용자 확인 대기)*
+
 ---
 
 ## MVP 이후 (선택 / 백로그)
 - [x] ~~Button headless(useButton) 분리~~ — 건너뛰지 않고 Phase 3 STEP 3-3 에서 완료
 - [ ] Accordion (ARIA 심화)
 - [ ] Select Input
-- [ ] Grid
+- [x] ~~Grid~~ — Phase 6 으로 승격 (보조 컴포넌트 배치)
 - [ ] List
 - [ ] Tailwind prefix 옵션 + tree-shaking 문제 해결
 - [ ] 비주얼 회귀 테스트
@@ -125,3 +150,9 @@
 - 2026-05-22 | STEP 4-2·4-3 edgecase-review 수행 (FAIL 0, WARN 0) | 신규 엣지케이스 없음 — phase-4.md 미수정 | —
 - 2026-05-22 | Phase 5 STEP 5-1·5-2 배치 완료 (Button/TextInput/Toast MDX 문서 + .github/workflows/ci.yml, tsc·build·vitest 17/17 클린) | edgecase-review WARN 1 — Toast.mdx 미사용 Controls import → 즉시 수정, docs/edgecase/phase-5.md 신규 작성 | CI 초록불은 push 후 사용자 확인 / STEP 5-3 진행 여부 협의
 - 2026-05-22 | STEP 5-1 사용자 검증 중 Storybook 빌드 실패 발견·수정 (커스텀 MDX + tags:["autodocs"] 공존 → SB10 인덱싱 충돌) | 세 CSF 에서 tags:["autodocs"] 제거 → build-storybook 성공 재확인, phase-5.md FAIL 기록 | MDX Docs 탭 시각 확인 사용자 대기
+- 2026-05-22 | Phase 6(보조 컴포넌트 5종) 설계 문서화 — architecture.md §7·§8 갱신, phases.md STEP 6-1~6-6 설계도 추가, mvp-checklist Phase 6 항목 신설 | MVP 범위 확장(사용자 승인, Immutable Rule 8) — Card 단순 컨테이너·Grid 고정 컬럼 확정 / 코드 변경은 없어 edgecase-review 는 구현 배치 후 수행 | Phase 6 구현 배치 예정
+- 2026-05-22 | Phase 6 STEP 6-1~6-6 배치 완료 (Spinner·Badge·Divider·Card·Grid 5종 구현 + 각 배럴·스토리·테스트 + Button 로컬 Spinner 교체 + src/index.ts export 5종 추가) | 선행(@theme radius/shadow 매핑) N/A 확인(cascade 자동) / ButtonSpinner 크기 size 연동(md→size-5, lg→size-6) / edgecase-review WARN 1건 — Badge subtle neutral 대비율 jsdom 미검증, docs/edgecase/phase-6.md 신규 기록 | Storybook 렌더·다크모드 사용자 시각 확인 대기
+- 2026-05-22 | Phase 7(배포 & README) 항목 신설 — architecture.md §9 "배포(Vercel)" 신설·§8 로드맵 Phase 7 행·§4 폴더 구조에 README.md·vercel.json 추가, mvp-checklist Phase 7 섹션 신설 | Storybook 정적 빌드를 Vercel 호스팅 결정(사용자 승인) / phases.md 미수정(배포·문서 작업이라 상세 STEP 불요 — 사용자 결정) / 코드 변경 없어 edgecase-review 는 N/A(vercel.json·README 는 tokens·ui 소스 아님) | Vercel 세팅·README 구현 예정
+- 2026-05-22 | Phase 7 vercel.json 작성 (루트) — framework:null, installCommand(pnpm install --frozen-lockfile), buildCommand(pnpm -r build && build-storybook), outputDirectory(packages/ui/storybook-static). CI ci.yml 과 동일 빌드 체인. 로컬에서 전체 체인 실행 검증 — storybook-static 정상 생성·outputDirectory 경로 일치 확인 | Node 버전은 vercel.json 에 지정 불가 → Vercel 대시보드에서 20.x 설정 권장(CI 와 정합, architecture.md §9 "확인 필요" 참조) | Vercel 프로젝트 연결 예정
+- 2026-05-22 | vercel.json edgecase-review 수행 (FAIL 0, WARN 1) — 배포 환경 전 범위 점검 | WARN: Vercel 이 engines.node ">=20" → Node 22.x 자동 선택, CI·로컬(20)과 불일치 → docs/edgecase/phase-7.md 신규 기록, 대시보드 20.x 설정 권장 / 검증: NODE_ENV=production 재현 — pnpm 은 npm 과 달리 devDeps 를 건너뛰지 않음 → --prod=false 불요, installCommand 는 CI 와 동일 유지(vercel.json 코드 변경 0) / lockfile 동기·정규 의존성 상태 빌드 체인 재검증 통과 | Vercel 프로젝트 연결 예정
+- 2026-05-22 | Phase 7 루트 README.md 작성 — 포트폴리오용 12개 항목(소개·라이브 데모·목적/계기·기술 스택·기술 선택 고민·주요 기능·실행 방법·구조·배운 점·아쉬운 점/개선·성능 개선 기록·트러블슈팅) + 목차·기술 배지. architecture.md·phases.md·docs/edgecase 기록을 근거로 작성 | 라이브 데모 URL 은 Vercel 배포 후 입력(현재 플레이스홀더) / CI 배지는 저장소 경로 미상이라 주석 처리 / 스크린샷 자리 주석 표시 | Vercel 프로젝트 연결 후 데모 URL·스크린샷 추가 예정

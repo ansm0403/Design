@@ -2,7 +2,9 @@
 
 > 각 STEP의 구조: **무엇을 / 왜 / 지시 프롬프트 / 핵심 포인트 / 주의**
 > 한 STEP 끝나면 `edgecase-review` 스킬로 검증한 뒤 `mvp-checklist.md` 의 해당 항목을 체크한다.
-> 최종 갱신: 2026-05-21 — Tailwind v4, Storybook 10, vitest-axe, STEP 2 재구성.
+> 최종 갱신: 2026-05-22 — Phase 6(보조 컴포넌트 5종 — Spinner/Badge/Divider/
+>   Card/Grid) STEP 6-1~6-6 설계도 추가. MVP 확장(사용자 승인).
+> 2026-05-21 — Tailwind v4, Storybook 10, vitest-axe, STEP 2 재구성.
 
 ---
 ---
@@ -1135,6 +1137,308 @@ Storybook autodocs 를 활성화하고 MDX 문서 페이지를 작성한다.
 ```
 
 **Phase 5 완료 기준**: CI가 초록불, Storybook 문서가 컴포넌트별로 완성.
+
+---
+---
+
+# Phase 6 — 보조 컴포넌트 (MVP 확장)
+
+> 목표: 자주 쓰이되 구현 난도가 낮은 보조 컴포넌트 5종(Spinner·Badge·Divider·
+>   Card·Grid)을 추가해 컴포넌트 커버리지를 넓힌다.
+> ⚠️ 이 Phase 는 원래 MVP(Phase 0~5) 범위 밖이다 — 2026-05-22 사용자 승인으로
+>   추가됐다(Immutable Rule 8 / architecture.md §7 "Phase 6 추가" 참조).
+> 성격: 새 개념 학습이 아니라 **기존 패턴(cva·Box 합성·정적 클래스 매핑·
+>   forwardRef·useId)의 재사용**으로 적은 비용에 커버리지를 넓히는 Phase 다.
+> 실행: STEP 6-1~6-6 은 모두 소규모·저위험이라 한 배치로 진행 가능하다.
+>   단 STEP 6-1 은 Button 을 리팩터링하므로 회귀 검증에 주의할 것.
+>
+> **선행 작업**: 현재 `theme.css` 의 `@theme inline` 은 컬러 9역할만 매핑한다
+>   (STEP 2-2 기록). STEP 6-2(Badge)·6-4(Card)가 `rounded-*`·`shadow-*` 유틸리티를
+>   **토큰 기반**으로 쓰려면(불변규칙 3·4), `@theme inline` 에 radius·shadow 토큰
+>   매핑을 먼저 추가해야 한다 — 안 하면 그 클래스들이 토큰이 아닌 Tailwind
+>   기본값을 쓴다. 배치 진입 시 이 매핑부터 처리하라(architecture.md §6 의
+>   토큰↔Tailwind 다리). 매핑 후 `dist/styles.css` 에 토큰 값이 반영되는지 확인.
+
+## STEP 6-1. Spinner — 로딩 인디케이터 (+ Button 리팩터링)
+
+**무엇을**: 회전 로딩 표시 컴포넌트. 현재 `Button.tsx` 안에 인라인 SVG 로 박혀
+있는 스피너를 독립 컴포넌트로 추출하고, Button 이 그것을 재사용하도록 리팩터링.
+
+**왜**: (1) 데이터 로딩 등 단독 사용처가 있다. (2) Button 외 다른 컴포넌트도
+재사용 가능. (3) 인라인 SVG 추출 자체가 DRY 리팩터링 학습.
+
+**지시 프롬프트**
+```
+packages/ui/src/Spinner 에 Spinner 컴포넌트를 만든다.
+- Button.tsx 의 인라인 SVG 스피너(animate-spin)를 그대로 추출해 기반으로 삼는다.
+- size: sm / md / lg — 정적 클래스 매핑(예: size-4 / size-5 / size-6)
+- 색은 currentColor 상속 — stroke/fill 을 currentColor 로. 토큰 하드코딩 금지(규칙 3).
+- 접근성 2경로:
+  · 기본: role="status" + aria-label(기본값 "로딩 중", prop 으로 덮어쓰기)
+  · 장식용: aria-hidden 을 받으면 role 제거 + aria-hidden="true" (중복 낭독 방지)
+- forwardRef 지원 (ref → <svg>)
+이어서 Button.tsx 를 리팩터링한다:
+- 인라인 SVG 를 <Spinner aria-hidden size={버튼 size 에 대응} /> 로 교체.
+- 스피너 오버레이 레이아웃(absolute inset-0)·children opacity-0 너비 보존은 그대로.
+src/index.ts 에 Spinner·SpinnerProps export 추가.
+Storybook: Sizes(sm/md/lg) + OnSurface(버튼/텍스트 옆 색 상속 데모) 스토리.
+```
+
+**핵심 포인트**
+- **currentColor 상속**: 스피너는 색을 직접 안 정하고 부모 글자색을 따른다.
+  Button 안에서든 텍스트 옆에서든 자동으로 어울린다(불변규칙 3 준수).
+- **접근성 2경로**: 단독 Spinner 는 `role="status"` 로 로딩을 알려야 하지만,
+  Button 안의 Spinner 는 버튼이 이미 `aria-busy="true"` 를 갖는다 →
+  스피너까지 `role="status"` 면 스크린리더가 두 번 안내한다. Button 에서 쓸 땐
+  `aria-hidden` 으로 장식 처리한다.
+- size 매핑: Button 의 size(sm/md/lg)와 결을 맞춰 Spinner size 도 3단계.
+
+**주의**
+- ⚠️ **Button 회귀 위험**: STEP 3-2 의 "스피너 오버레이 + 너비 보존" 동작
+  (`absolute inset-0` 겹침, children `opacity-0`)이 리팩터링 후에도 동일해야 한다.
+  특히 STEP 3-2 의 phase-3 FAIL 수정(로딩 중 accessible name 보존 — children 을
+  `invisible` 이 아닌 `opacity-0` 로)이 깨지지 않도록 children 처리는 건드리지 말 것.
+- ⚠️ Button 의 스피너는 `aria-hidden` 경로 — 버튼의 `aria-busy` 와 중복 안내 방지.
+- 추출 후 Button.test.tsx 의 로딩 관련 테스트(aria-busy, accessible name)가
+  여전히 통과하는지 회귀 신호로 삼는다(최종 검증은 STEP 6-6).
+
+---
+
+## STEP 6-2. Badge — 상태·카운트 라벨
+
+**무엇을**: 상태("진행 중"), 카운트(알림 수), 범주를 나타내는 작은 라벨.
+
+**왜**: 표·리스트·헤더 등에서 매우 흔하다. Button STEP 3-1 의 cva
+`compoundVariants` 패턴을 그대로 재사용 — 새 개념 없이 빠르게 추가.
+
+**지시 프롬프트**
+```
+packages/ui/src/Badge 에 Badge 컴포넌트를 만든다.
+- <span> 기반(인터랙션 없음) + forwardRef
+- variant: solid / subtle / outline
+- color: primary / danger / success / neutral (토큰 기반)
+- size: sm / md
+- cva 로 관리(Button STEP 3-1 패턴):
+  · variant·color 는 조합으로만 결과가 정해짐 → compoundVariants 로 12조합
+    - solid   = bg-{color} + text-background
+    - subtle  = bg-{color}/10 + text-{color}
+    - outline = border border-{color} + text-{color} (배경 투명)
+  · size 는 독립 → variants.size 단독 선언(패딩·글자크기)
+- 모서리: pill(rounded-full)
+- prop 타입은 VariantProps<typeof badgeStyles> 로 자동 추출
+src/index.ts 에 Badge·BadgeProps export 추가.
+Storybook: Playground(Controls) + AllCombinations(variant×color×size 갤러리).
+```
+
+**핵심 포인트**
+- **Button 과 같은 cva 구조**: variant·color 가 단독으론 시각 결과를 못 정하므로
+  `compoundVariants` 가 조합을 책임진다. `size` 만 독립 variant.
+- **subtle 배경 = opacity modifier**: `bg-primary/10` 은 토큰 색 + 투명도 →
+  새 색을 하드코딩하는 게 아니라 불변규칙 3 위반이 아니다.
+- **solid 글자색 = `text-background`**: Button 과 동일 근거(다크 테마 대비 자동
+  확보 — docs/edgecase/phase-3.md). `text-white` 금지.
+- color 가 4종(Button 은 3종) — `success` 추가. 상태 배지에 필수이고 success
+  토큰은 STEP 1-2 에서 이미 정의돼 있다.
+
+**주의**
+- 정적 클래스: cva 정의 안에 조합 클래스 리터럴이 모두 있어 Tailwind 스캐너가
+  인식한다(Button 과 동일 — 스토리가 값을 동적으로 넘겨도 무방).
+- `rounded-full` 은 Phase 6 선행(@theme 에 radius 매핑)이 적용돼야 토큰 기반이
+  된다 — Phase 6 intro 의 "선행 작업" 참조.
+- Badge 는 삭제 버튼 달린 클릭형 "Chip" 이 아니다 — 순수 표시용. 인터랙티브
+  태그 컴포넌트가 필요해지면 별도 컴포넌트로(현 범위 밖).
+
+---
+
+## STEP 6-3. Divider — 구분선
+
+**무엇을**: 콘텐츠를 시각·의미적으로 나누는 가로/세로 선.
+
+**왜**: 목록 항목·섹션·툴바 구분에 흔하다. 거의 트리비얼하지만 ARIA
+`separator` 를 곁들이면 의미 전달까지 챙긴다.
+
+**지시 프롬프트**
+```
+packages/ui/src/Divider 에 Divider 컴포넌트를 만든다.
+- <div> 기반 + forwardRef
+- orientation: horizontal(기본) / vertical
+- 1px 선, 색은 border 토큰만 사용(bg-border)
+- 크기 정적 클래스 매핑:
+  · horizontal → "h-px w-full"
+  · vertical   → "w-px self-stretch"
+- 접근성:
+  · 기본(의미 있는 구분) → role="separator" + aria-orientation={orientation}
+  · decorative prop(true) → 순수 장식 → role 부여 안 함 + aria-hidden="true"
+src/index.ts 에 Divider·DividerProps export 추가.
+Storybook: Horizontal / Vertical / InList(목록 항목 사이 사용 예시).
+```
+
+**핵심 포인트**
+- **`aria-orientation` 은 vertical 에서 특히 중요**: 기본 separator 는 가로로
+  가정되므로, 세로 구분선은 `aria-orientation="vertical"` 을 명시해야 스크린리더가
+  방향을 정확히 인지한다.
+- **`decorative` 경로**: 순수 시각용 선이면 보조기술에서 숨긴다(role 없음 +
+  `aria-hidden`). 의미 있는 경계(메뉴 그룹 구분 등)면 `separator` 를 유지한다.
+- 색·두께는 border 토큰만 — 하드코딩 금지(불변규칙 3). `border` 는 이미 @theme
+  의 컬러 9역할에 포함돼 `bg-border` 가 토큰 기반으로 동작한다(선행 작업 불필요).
+
+**주의**
+- ⚠️ **vertical Divider 는 부모가 높이를 줘야 보인다**: `self-stretch` 는 flex
+  부모 안에서 교차축을 꽉 채운다 — Flex 안에 넣어 써야 한다. 스토리(Vertical)는
+  높이 있는 Flex 컨테이너로 감싸 보여줄 것.
+- `<hr>` 대신 `<div role="separator">` 를 쓴다 — `<hr>` 은 가로 전용 시맨틱이라
+  한 컴포넌트로 vertical 까지 처리하기에 부적합하다.
+
+---
+
+## STEP 6-4. Card — surface 컨테이너
+
+**무엇을**: 콘텐츠를 묶는 표면(surface) 컨테이너.
+
+**왜**: 대시보드·리스트·폼 그룹 등에서 가장 흔한 컨테이너. 현재 `surface`·
+`shadow`·`radius`·`border` 토큰을 소비하는 컴포넌트가 하나도 없다 — Card 가
+그 공백을 메우는 첫 소비자다.
+
+**설계 결정 (2026-05-22, 사용자 확정)**: **단순 컨테이너** 형태로 만든다.
+`Card.Header / Card.Body / Card.Footer` 같은 compound component 는 만들지
+않는다 — 내부 콘텐츠 구조는 소비자가 기존 Stack/Flex/Box 로 자유 조합한다.
+(compound 패턴이 필요해지면 후속 확장 — 지금은 speculative 라 보류.)
+
+**지시 프롬프트**
+```
+선행: theme.css 의 @theme inline 에 shadow·radius 토큰을 매핑한다
+  (없으면 rounded-md / shadow-md 가 토큰이 아닌 Tailwind 기본값을 쓴다).
+
+packages/ui/src/Card 에 Card 컴포넌트를 만든다.
+- 순수 <div> + forwardRef (Button STEP 3-1 처럼 polymorphic 아님 — 단순함 우선)
+- cn() 으로 className 병합
+- cva 로 관리하되 variant·padding 은 서로 독립 → variants 그룹 2개,
+  compoundVariants 불필요(Button·Badge 와 다른 단순 케이스):
+  · variant: outlined(기본) / elevated / filled
+    - outlined = bg-surface + border border-border
+    - elevated = bg-surface + shadow-md (테두리 없음)
+    - filled   = bg-surface (테두리·그림자 없음)
+  · padding: none / sm / md(기본) / lg
+- 모서리: radius 토큰(rounded-md)
+- prop 타입은 VariantProps<typeof cardStyles> 로 자동 추출
+src/index.ts 에 Card·CardProps export 추가.
+Storybook: Playground(Controls) + Variants(outlined/elevated/filled 비교) +
+  WithContent(Stack 으로 제목·본문·Button 을 조합한 실제 사용 예시).
+```
+
+**핵심 포인트**
+- **variant·padding 이 독립적** → `compoundVariants` 가 필요 없다. Button/Badge 가
+  조합 매트릭스를 쓴 것과 대비되는, cva 의 가장 단순한 사용례.
+- **`surface`·`border`·`shadow`·`radius` 토큰의 첫 소비자** — 토큰 정의는
+  Phase 1 에 있었으나 실제 쓰는 컴포넌트가 없었다. Card 가 그 토큰들이 실제로
+  동작하는지(다크모드 포함) 검증하는 역할도 겸한다.
+- **polymorphic(`as`) 은 의도적으로 생략**: 단순 컨테이너 결정에 맞춰 Button 처럼
+  순수 `<div>` 로 둔다. Box·Flex 의 제네릭 캐스팅 → displayName 함정(STEP 2-3)을
+  피한다. 시맨틱 태그(`<article>` 등)가 필요해지면 후속에서 `as` 를 추가한다.
+
+**주의**
+- Box 기반이 아니므로 polymorphic displayName 함정은 해당 없음 — Button 처럼
+  `forwardRef` 결과에 `.displayName` 을 바로 지정한다.
+- `filled` variant 의 배경은 `bg-surface` — `outlined`/`elevated` 와 같은 표면색을
+  쓰되 테두리·그림자만 뺀다. 별도 색 토큰을 새로 만들지 않는다.
+- `shadow-md`·`rounded-md` 는 Phase 6 선행(@theme 매핑)이 끝나야 토큰 값을 쓴다.
+
+---
+
+## STEP 6-5. Grid — 2차원 격자 레이아웃
+
+**무엇을**: CSS Grid 기반 격자 레이아웃 컴포넌트. Flex(1차원)의 짝.
+
+**왜**: 카드 갤러리·대시보드 등 격자 배치에 흔하다. STEP 2-5 Flex 의 "Box 합성 +
+정적 클래스 매핑" 패턴을 그대로 준용한다.
+
+**설계 결정 (2026-05-22, 사용자 확정)**: **고정 컬럼만** 지원한다 — `cols` 는
+단일 숫자만 받는다. 반응형(브레이크포인트별 컬럼)은 넣지 않고, 아래 "반응형
+확장 메모" 로 후속 확장 경로만 문서에 남긴다.
+
+**지시 프롬프트**
+```
+packages/ui/src/Grid 에 Grid 컴포넌트를 만든다 (Flex STEP 2-5 패턴 준용).
+- Box 기반: <Box as={as} .../> — Flex 와 동일한 합성 방식, forwardRef
+- props:
+  · cols: 1~6 (grid-template-columns, 고정 단일 숫자)
+  · gap: 0|1|2|3|4|6|8 (Flex 와 동일한 Tailwind spacing 스케일)
+  · rows/flow 등은 넣지 않는다 — cols+gap 만 (over-engineering 회피)
+- 베이스 클래스 "grid"
+- prop→클래스는 정적 매핑 객체(Flex 의 directionClass/gapClass 패턴):
+  colsClass = { 1:"grid-cols-1", 2:"grid-cols-2", ..., 6:"grid-cols-6" }
+  gapClass  = { 0:"gap-0", 1:"gap-1", 2:"gap-2", 3:"gap-3", 4:"gap-4",
+                6:"gap-6", 8:"gap-8" }
+  ⚠️ Tailwind v4 는 소스를 정적 스캔한다 → `grid-cols-${n}` 동적 조합은
+     스캐너가 못 잡는다. 반드시 완성된 클래스명 리터럴을 나열할 것.
+- gap 은 0 이 유효값 → `gap !== undefined` 로 검사(Flex STEP 2-5 와 동일).
+src/index.ts 에 Grid·GridProps export 추가.
+Storybook: Playground(Controls) + Columns(2/3/4) + CardGallery(Card 와 조합).
+```
+
+**핵심 포인트**
+- Flex 는 1차원(row/column), Grid 는 2차원 — 같은 "Box 기반 레이아웃" 패밀리.
+- **정적 클래스 매핑**은 Flex STEP 2-5 의 핵심 함정 그대로다 — 동적 클래스명
+  조합 금지, 완성 리터럴만 나열.
+- gap 스케일·`gap !== undefined` 검사 모두 Flex 와 동일하게 맞춘다(일관성).
+
+**반응형 확장 메모 (사용자 요청 — 후속 확장 경로)**
+- 현재 `cols` 는 단일 숫자만 받는다. 향후 반응형이 필요해지면 `cols` 가
+  `number | { base?: N; sm?: N; md?: N; lg?: N }` 를 받도록 확장한다.
+- 그때 매핑 테이블이 (컬럼 수 × 브레이크포인트) 만큼 커진다 — `md:grid-cols-3`
+  같은 완성 리터럴을 브레이크포인트별로 전부 나열해야 한다(Tailwind 정적 스캔
+  제약). 난도가 ★★☆ → ★★★ 로 오른다.
+- API 는 하위호환을 유지한다 — 숫자 `cols={3}` 은 그대로 동작하고 객체 형태가
+  추가될 뿐이다. 그래서 지금 고정 컬럼으로 시작해도 나중에 깨짐 없이 확장 가능.
+
+**주의**
+- Box 기반이라 Flex 와 같은 displayName 처리가 필요하다 — Flex 가 이미 쓴 패턴
+  (`BoxImpl` 로 끊고 캐스팅 전 `.displayName` 지정)을 그대로 따른다.
+- architecture.md §7 에서 Grid 는 원래 3순위였다 — Phase 6 으로 승격된 것이다.
+
+---
+
+## STEP 6-6. 접근성 테스트 & (선택) 문서
+
+**무엇을**: Phase 6 신규 5종의 접근성·동작 테스트. MDX 문서는 선택.
+
+**왜**: 신규 컴포넌트도 Phase 4 의 품질 기준(접근성 자동 검증)을 따라야 한다.
+신규 5종은 대부분 presentational 이라 axe 접근성 검사가 핵심 가치다.
+
+**지시 프롬프트**
+```
+Phase 4 패턴(jsdom + vitest-axe, <main> 래퍼)으로 신규 5종 테스트를 작성한다.
+- 접근성(vitest-axe) — 5종 모두 toHaveNoViolations:
+  · Spinner: role="status" 경로 / aria-hidden 장식 경로
+  · Badge / Card / Grid: 위반 없음
+  · Divider: role="separator"+aria-orientation 경로 / decorative 경로
+  모든 axe 테스트는 <main> 으로 감싼다(STEP 4-3 의 region best-practice 규칙).
+- 동작 단위 테스트(presentational 이라 최소한만):
+  · Spinner: aria-label 기본값/덮어쓰기, aria-hidden 시 role 제거
+  · Divider: decorative=true 시 role 미부여 + aria-hidden="true"
+- 회귀 가드: STEP 6-1 Button 리팩터링 후 기존 Button.test.tsx(로딩 aria-busy·
+  accessible name)가 그대로 통과하는지 확인.
+- (선택) Button/TextInput/Toast 처럼 MDX Docs 페이지 — 우선순위 낮음. 진행 여부
+  사용자 협의(autodocs↔커스텀 MDX 공존 불가 — phase-5.md FAIL 주의).
+```
+
+**핵심 포인트**
+- 신규 5종은 동작이 거의 없다 → axe 접근성 검사가 테스트의 중심. 동작 단위
+  테스트는 Spinner/Divider 의 분기 경로 정도로 최소화(over-engineering 회피).
+- `src/index.ts` export 는 각 STEP(6-1~6-5)에서 이미 추가됨 — 6-6 에서는 5종이
+  모두 패키지 공개 API 로 노출됐는지 `dist/index.d.ts` 로 최종 확인한다.
+
+**주의**
+- `src/library.css` 의 `@source not` 은 이미 `*.test.*`·`*.stories.tsx`·`*.mdx` 를
+  모두 제외한다(STEP 4-2·5-1 에서 보강 완료) — 신규 테스트·스토리 추가에 추가
+  조치가 필요 없다.
+- ⚠️ MDX 를 진행한다면 SB10 의 커스텀 MDX↔`tags:["autodocs"]` 공존 불가 함정을
+  반복하지 말 것(docs/edgecase/phase-5.md FAIL). 신규 CSF 에 autodocs 태그를
+  애초에 넣지 않으면 된다.
+
+**Phase 6 완료 기준**: Spinner·Badge·Divider·Card·Grid 가 `src/index.ts` 로
+export 되고, `pnpm --filter @my-ds/ui build` 클린, `vitest run` 전체 통과
+(신규 접근성 테스트 포함), Storybook 에서 5종이 토큰 색으로 렌더 + 다크모드 정상.
 
 ---
 ---
